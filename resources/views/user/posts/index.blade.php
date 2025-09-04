@@ -32,7 +32,7 @@
           @if(!empty($post->hashtag))
             <div class="mt-3 flex flex-wrap gap-2">
               @foreach(explode(',', $post->hashtag) as $tag)
-                <span class="text-xs px-2 py-1 bg-gray-100 rounded-full text-gray-600">#{{ trim($tag) }}</span>
+                <span class="text-xs px-2 py-1 bg-gray-100 rounded-full text-gray-600">{{ trim($tag) }}</span>
               @endforeach
             </div>
           @endif

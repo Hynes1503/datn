@@ -5,6 +5,8 @@ use App\Http\Controllers\User\MainController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\OCRController;
 use App\Http\Controllers\User\LoginController;
+use App\Http\Controllers\User\PostController;
+use App\Http\Controllers\ImageController;
 
 Route::get('/', [MainController::class, 'index'])->name('threads.index');
 Route::post('/post', [MainController::class, 'post'])->name('threads.post');
@@ -24,6 +26,7 @@ Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
 Route::post('/login', [LoginController::class, 'login']);
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 
-Route::get('/', function () {
-    return view('home');
-})->middleware('auth')->name('home')->middleware('auth.custom');;
+Route::get('/', [PostController::class, 'home'])->middleware('auth')->name('home')->middleware('auth.custom');;
+
+Route::resource('posts', PostController::class);
+Route::delete('/images/{image}', [ImageController::class, 'destroy'])->name('images.destroy')->middleware('auth');
