@@ -8,6 +8,7 @@ use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class OCRController extends Controller
 {
@@ -64,7 +65,6 @@ class OCRController extends Controller
 
     public function submit(Request $request)
     {
-        // Validate form input with custom error messages
         $validated = $request->validate([
             'name'                  => 'required|string|max:255',
             'dob'                   => 'required|string|regex:/^\d{1,2}[-\/.]\d{1,2}[-\/.]\d{4}$/',
@@ -75,31 +75,9 @@ class OCRController extends Controller
             'email'                 => 'required|email|max:255|unique:users,email',
             'password'              => 'required|string|min:8|confirmed',
             'password_confirmation' => 'required|string',
-        ], [
-            'name.required'                => 'Vui lòng nhập họ tên.',
-            'name.max'                    => 'Họ tên không được vượt quá 255 ký tự.',
-            'dob.required'                => 'Vui lòng nhập ngày sinh.',
-            'dob.regex'                   => 'Ngày sinh phải có định dạng dd/mm/yyyy hoặc dd-mm-yyyy.',
-            'class.required'              => 'Vui lòng nhập lớp.',
-            'class.max'                   => 'Lớp không được vượt quá 50 ký tự.',
-            'major.required'              => 'Vui lòng nhập ngành học.',
-            'major.max'                   => 'Ngành học không được vượt quá 255 ký tự.',
-            'course.required'             => 'Vui lòng nhập khóa học.',
-            'course.max'                  => 'Khóa học không được vượt quá 20 ký tự.',
-            'mssv.required'               => 'Vui lòng nhập MSSV.',
-            'mssv.max'                    => 'MSSV không được vượt quá 20 ký tự.',
-            'mssv.unique'                 => 'MSSV đã được sử dụng.',
-            'email.required'              => 'Vui lòng nhập email.',
-            'email.email'                 => 'Email không hợp lệ.',
-            'email.max'                   => 'Email không được vượt quá 255 ký tự.',
-            'email.unique'                => 'Email đã được sử dụng.',
-            'password.required'           => 'Vui lòng nhập mật khẩu.',
-            'password.min'                => 'Mật khẩu phải có ít nhất 8 ký tự.',
-            'password.confirmed'          => 'Mật khẩu xác nhận không khớp.',
-            'password_confirmation.required' => 'Vui lòng nhập xác nhận mật khẩu.',
         ]);
 
-        // Normalize and validate date of birth
+        // Chuẩn hoá ngày sinh
         try {
             $dobInput = trim(str_replace(['-', '.'], '/', $validated['dob']));
             $dob = Carbon::createFromFormat('d/m/Y', $dobInput)->format('Y-m-d');
@@ -108,10 +86,16 @@ class OCRController extends Controller
                 ->withInput();
         }
 
-        // Create new user
+        // Tạo mention ngẫu nhiên từ name
+        $baseMention = Str::slug($validated['name']); // ví dụ "Phạm Văn Hiền" -> "pham-van-hien"
+        do {
+            $mention = $baseMention . rand(100, 999);
+        } while (User::where('mention', $mention)->exists());
+
         try {
             $user = User::create([
                 'name'       => $validated['name'],
+                'mention'    => $mention,
                 'dob'        => $dob,
                 'class'      => $validated['class'],
                 'major'      => $validated['major'],
@@ -121,15 +105,12 @@ class OCRController extends Controller
                 'password'   => Hash::make($validated['password']),
             ]);
 
-            // Delete the uploaded image after successful registration
             if ($request->has('image') && Storage::disk('public')->exists($request->image)) {
                 Storage::disk('public')->delete($request->image);
             }
 
-            // Redirect to login page with success message
             return redirect()->route('login')->with('success', 'Đăng ký thành công cho MSSV: ' . $user->student_id . '. Vui lòng đăng nhập.');
         } catch (\Exception $e) {
-            // Handle general errors and return to previous page with input
             return redirect()->route('auth.register')->withErrors(['general' => 'Lỗi khi tạo tài khoản. Vui lòng thử lại.'])->withInput();
         }
     }

@@ -6,7 +6,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\OCRController;
 use App\Http\Controllers\User\LoginController;
 use App\Http\Controllers\User\PostController;
-use App\Http\Controllers\ImageController;
+use App\Http\Controllers\User\UserController;
 
 Route::get('/', [MainController::class, 'index'])->name('threads.index');
 Route::post('/post', [MainController::class, 'post'])->name('threads.post');
@@ -29,4 +29,14 @@ Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 Route::get('/', [PostController::class, 'home'])->middleware('auth')->name('home')->middleware('auth.custom');;
 
 Route::resource('posts', PostController::class);
-Route::delete('/images/{image}', [ImageController::class, 'destroy'])->name('images.destroy')->middleware('auth');
+
+Route::prefix('users')->group(function () {
+    Route::get('/', [UserController::class, 'index'])->name('users.index');       // danh sách
+    Route::get('/create', [UserController::class, 'create'])->name('users.create'); // form tạo
+    Route::post('/', [UserController::class, 'store'])->name('users.store');       // lưu mới
+
+    Route::get('/{mention}', [UserController::class, 'show'])->name('users.show'); // xem profile
+    Route::get('/{mention}/edit', [UserController::class, 'edit'])->name('users.edit'); // form sửa
+    Route::put('/{mention}', [UserController::class, 'update'])->name('users.update'); // cập nhật
+    Route::delete('/{mention}', [UserController::class, 'destroy'])->name('users.destroy'); // xoá
+});

@@ -16,28 +16,26 @@ class LoginController extends Controller
 
     public function login(Request $request)
     {
-        // Xác thực dữ liệu đầu vào
+        // Validate input
         $credentials = $request->validate([
-            'login' => ['required', 'string'], // Đảm bảo trường là 'login'
+            'login' => ['required', 'string'],
             'password' => ['required'],
         ]);
 
-        // Kiểm tra xem giá trị nhập vào là email hay MSSV
+        // Determine if login input is email or student_id
         $field = filter_var($request->login, FILTER_VALIDATE_EMAIL) ? 'email' : 'student_id';
 
-        // Tìm user theo email hoặc MSSV
-        $user = User::where($field, $request->login)->first();
-
-        // Kiểm tra user tồn tại và mật khẩu đúng
-        if ($user && Auth::attempt([$field => $request->login, 'password' => $request->password])) {
-            // Tái tạo session
+        // Attempt to authenticate
+        if (Auth::attempt([$field => $request->login, 'password' => $request->password])) {
+            // Regenerate session to prevent session fixation
             $request->session()->regenerate();
 
-            // Chuyển hướng đến trang home
-            return redirect()->route('home')->with('success', 'Đăng nhập thành công!');
+            // Redirect to the authenticated user's profile
+            return redirect()->route('users.show', Auth::user()->mention)
+                             ->with('success', 'Đăng nhập thành công!');
         }
 
-        // Nếu đăng nhập thất bại
+        // Return to login form with error message
         return back()->withErrors([
             'login' => 'Email hoặc MSSV hoặc mật khẩu không đúng.',
         ])->onlyInput('login');

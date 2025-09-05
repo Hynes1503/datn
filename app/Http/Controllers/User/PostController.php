@@ -72,7 +72,7 @@ class PostController extends Controller
             }
         }
 
-        return redirect()->route('posts.index')->with('success', 'Đăng bài thành công!');
+        return redirect()->route('home')->with('success', 'Đăng bài thành công!');
     }
 
     /**
