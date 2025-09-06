@@ -58,21 +58,22 @@ class UserController extends Controller
         return view('user.users.edit', compact('user'));
     }
 
-    public function update(Request $request, User $user, $mention)
+    public function update(Request $request, $mention)
     {
         $user = User::where('mention', $mention)->firstOrFail();
+
         if (Auth::id() !== $user->id && Auth::user()->role !== 'Admin') {
             abort(403, 'Bạn không có quyền chỉnh sửa người dùng này.');
         }
 
         $validated = $request->validate([
-            'name'       => 'required|string|max:255',
+            'name' => 'required|string|max:255',
             'mention' => 'nullable|string|unique:users,mention,' . $user->id,
-            'dob'        => 'nullable|date',
-            'class'      => 'nullable|string|max:255',
-            'major'      => 'nullable|string|max:255',
-            'course'     => 'nullable|string|max:255',
-            'avatar'     => 'nullable|image|mimes:jpg,jpeg,png,gif|max:2048',
+            'dob' => 'nullable|date',
+            'class' => 'nullable|string|max:255',
+            'major' => 'nullable|string|max:255',
+            'course' => 'nullable|string|max:255',
+            'avatar' => 'nullable|image|mimes:jpg,jpeg,png,gif|max:2048',
             'profile_visibility.dob' => 'nullable|boolean',
             'profile_visibility.class' => 'nullable|boolean',
             'profile_visibility.major' => 'nullable|boolean',
@@ -85,12 +86,10 @@ class UserController extends Controller
             $validated['avatar'] = $path;
         }
 
-        // Update mention if name changes
         if ($request->name !== $user->name) {
             $validated['mention'] = $request->mention;
         }
 
-        // Merge profile visibility settings
         $validated['profile_visibility'] = [
             'dob' => $request->input('profile_visibility.dob', false),
             'mention' => $request->input('profile_visibility.mention', false),
@@ -105,6 +104,7 @@ class UserController extends Controller
         return redirect()->route('users.show', $user->mention)
             ->with('success', 'Cập nhật thông tin thành công!');
     }
+
 
     public function destroy($mention)
     {

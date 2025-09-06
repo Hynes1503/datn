@@ -12,6 +12,7 @@ class Post extends Model
     protected $fillable = [
         'user_id',
         'title',
+        'slug',
         'content',
         'hashtag',
         'likes',
@@ -33,5 +34,17 @@ class Post extends Model
     public function images()
     {
         return $this->hasMany(PostImage::class);
+    }
+    public function getRouteKeyName()
+    {
+        return 'slug';
+    }
+    public function media()
+    {
+        return $this->hasMany(PostMedia::class);
+    }
+    public function comments()
+    {
+        return $this->hasMany(Comment::class)->whereNull('parent_id')->orderBy('created_at', 'desc');
     }
 }

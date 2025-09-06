@@ -6,10 +6,13 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Post;
 use Illuminate\Support\Facades\Auth;
-use App\Models\PostImage;
+// use App\Models\PostImage;
 use App\Models\User;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Session;
+use App\Models\PostMedia;
 
 class PostController extends Controller
 {
@@ -18,7 +21,7 @@ class PostController extends Controller
         $posts = Post::with('user')->latest()->paginate(10);
         return view('user.posts.index', compact('posts'));
     }
-    
+
     public function home()
     {
         $posts = Post::with('user')->latest()->paginate(10);
@@ -39,70 +42,128 @@ class PostController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'title'    => 'required|string|max:255',
-            'content'  => 'required|string',
-            'images'   => 'nullable|array',
-            'images.*' => 'image|mimes:jpg,jpeg,png,gif,webp',
-            'hashtag'  => 'nullable|string|max:255',
+            'title'   => 'required|string|max:255',
+            'content' => 'required|string',
+            'media'   => 'nullable|array',
+            'media.*' => 'file|mimes:jpg,jpeg,png,gif,webp,mp4,avi,mov,webm|max:51200',
+            'hashtag' => 'nullable|string|max:255',
         ]);
 
-        // Tạo post qua quan hệ user
+        // Kiểm tra user
         $user = Auth::user();
-        if (! $user) {
+        if (!$user) {
             return redirect()->route('login')->with('error', 'Bạn cần đăng nhập để đăng bài');
         }
 
+        // Sinh slug ngẫu nhiên
+        $slug = $this->generateRandomSlug(12);
+
+        // Tạo post
         $post = $user->posts()->create([
             'title'   => $request->title,
             'content' => $request->content,
             'hashtag' => $request->hashtag,
+            'slug'    => $slug,
         ]);
 
-        // Nếu $post rỗng -> log để debug
-        if (! $post) {
-            Log::error('Post not created', ['user_id' => Auth::id(), 'request' => $request->all()]);
+        if (!$post) {
+            Log::error('Post not created', ['user_id' => $user->id, 'request' => $request->all()]);
             return back()->with('error', 'Tạo bài viết thất bại');
         }
 
-        // Lưu nhiều ảnh (nếu có)
-        if ($request->hasFile('images')) {
-            foreach ($request->file('images') as $image) {
-                $path = $image->store('posts', 'public'); // Lưu vào storage/app/public/posts
-                $post->images()->create(['image_path' => $path]);
+        // Lưu media (ảnh + video)
+        if ($request->hasFile('media')) {
+            foreach ($request->file('media') as $file) {
+                $ext  = strtolower($file->getClientOriginalExtension());
+                $type = in_array($ext, ['jpg', 'jpeg', 'png', 'gif', 'webp']) ? 'image' : 'video';
+
+                $path = $file->store('posts/media', 'public');
+
+                $post->media()->create([
+                    'media_path' => $path,
+                    'media_type' => $type,
+                ]);
             }
         }
 
         return redirect()->route('home')->with('success', 'Đăng bài thành công!');
     }
 
+
+    /**
+     * Sinh slug ngẫu nhiên với độ dài $length, chỉ chứa chữ hoa và thường
+     */
+    private function generateRandomSlug($length = 12)
+    {
+        $characters = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        $slug = '';
+        for ($i = 0; $i < $length; $i++) {
+            $slug .= $characters[random_int(0, strlen($characters) - 1)];
+        }
+
+        // Đảm bảo slug là duy nhất
+        while (Post::where('slug', $slug)->exists()) {
+            $slug = $this->generateRandomSlug($length);
+        }
+
+        return $slug;
+    }
+
     /**
      * Hiển thị chi tiết bài viết
      */
-    public function show(Post $post)
+
+    public function show(User $user, Post $post)
     {
-        $post->increment('views'); // Tăng lượt xem
-        return view('user.posts.show', compact('post'));
+        // Đảm bảo bài viết thuộc user
+        if ($post->user_id !== $user->id) {
+            abort(404);
+        }
+
+        // Key để check trong session
+        $sessionKey = 'viewed_post_' . $post->id;
+
+        // Nếu chưa xem và không phải chính chủ thì mới tăng view
+        if ((!Auth::check() || Auth::id() !== $user->id) && !Session::has($sessionKey)) {
+            $post->increment('views');
+            Session::put($sessionKey, true);
+        }
+
+        return view('user.posts.show', compact('user', 'post'));
     }
 
     /**
      * Form chỉnh sửa bài viết
      */
-    public function edit(Post $post)
+    public function edit(User $user, Post $post)
     {
-        return view('user.posts.edit', compact('post'));
+        // Đảm bảo bài viết thuộc user
+        if ($post->user_id !== $user->id) {
+            abort(404);
+        }
+
+        return view('user.posts.edit', compact('user', 'post'));
     }
 
     /**
      * Cập nhật bài viết
      */
-    public function update(Request $request, Post $post)
+    public function update(Request $request, User $user, Post $post)
     {
+        // Đảm bảo bài viết thuộc user
+        if ($post->user_id !== $user->id) {
+            abort(404);
+        }
+
+        // Validate
         $request->validate([
-            'title'    => 'required|string|max:255',
-            'content'  => 'required|string',
-            'images'   => 'nullable|array',
-            'images.*' => 'image|mimes:jpg,jpeg,png,gif,webp',
-            'hashtag'  => 'nullable|string|max:255',
+            'title'   => 'required|string|max:255',
+            'content' => 'required|string',
+            'hashtag' => 'nullable|string|max:255',
+            'media'   => 'nullable|array',
+            'media.*' => 'file|mimes:jpg,jpeg,png,gif,webp,mp4,mov,avi,wmv|max:51200', // 50MB
+            'delete_media' => 'nullable|array',
+            'delete_media.*' => 'integer|exists:post_media,id',
         ]);
 
         // Cập nhật thông tin bài viết
@@ -112,35 +173,55 @@ class PostController extends Controller
             'hashtag' => $request->hashtag,
         ]);
 
-        // Xử lý ảnh: xóa toàn bộ ảnh cũ và thêm ảnh mới nếu có
-        if ($request->hasFile('images')) {
-            // Xóa toàn bộ ảnh cũ
-            foreach ($post->images as $image) {
-                Storage::disk('public')->delete($image->image_path); // Xóa file ảnh khỏi storage
-                $image->delete(); // Xóa bản ghi trong database
-            }
-
-            // Thêm ảnh mới
-            foreach ($request->file('images') as $image) {
-                $path = $image->store('posts', 'public'); // Lưu vào storage/app/public/posts
-                $post->images()->create(['image_path' => $path]);
+        // Xử lý xóa media được chọn
+        if ($request->filled('delete_media')) {
+            foreach ($request->delete_media as $mediaId) {
+                $media = $post->media()->find($mediaId);
+                if ($media) {
+                    // Xóa file thật trong storage
+                    Storage::disk('public')->delete($media->media_path);
+                    // Xóa record DB
+                    $media->delete();
+                }
             }
         }
 
-        return redirect()->route('posts.index')->with('success', 'Cập nhật bài viết thành công!');
+        // Xử lý upload media mới
+        if ($request->hasFile('media')) {
+            foreach ($request->file('media') as $file) {
+                $path = $file->store('posts', 'public');
+                $type = Str::startsWith($file->getMimeType(), 'video') ? 'video' : 'image';
+
+                $post->media()->create([
+                    'media_path' => $path,
+                    'media_type' => $type,
+                ]);
+            }
+        }
+
+        return redirect()->route('posts.show', [
+            'user' => $user->mention,
+            'post' => $post->slug
+        ])->with('success', 'Cập nhật bài viết thành công!');
     }
 
     /**
-     * Xoá bài viết
+     * Xóa bài viết
      */
-    public function destroy(Post $post)
+    public function destroy(User $user, Post $post)
     {
+        // Đảm bảo bài viết thuộc user
+        if ($post->user_id !== $user->id) {
+            abort(404);
+        }
+
         // Xóa ảnh liên quan trước khi xóa bài viết
         foreach ($post->images as $image) {
             Storage::disk('public')->delete($image->image_path);
             $image->delete();
         }
         $post->delete();
-        return redirect()->route('posts.index')->with('success', 'Xoá bài viết thành công!');
+
+        return redirect()->route('posts.index')->with('success', 'Xóa bài viết thành công!');
     }
 }

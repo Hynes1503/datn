@@ -1,17 +1,41 @@
 @extends('layouts.app')
 
-@section('title', 'Danh sách bài viết')
+@section('title', 'Trang chủ')
+@section('menuTitle', 'Sự kiện mới')
 
 @section('content')
     <style>
-        /* CSS for lazy loading and smooth transitions */
+        /* CSS for post creation form */
+        .post-creation-form {
+            background-color: #fff;
+            border-radius: 16px;
+            padding: 16px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .post-creation-form img {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        /* CSS for lazy loading posts and images */
         .post-article {
             opacity: 0;
             transform: translateY(20px);
             transition: opacity 0.5s ease, transform 0.5s ease;
-            cursor: pointer; /* Add cursor pointer to indicate clickability */
-            text-decoration: none; /* Remove default link underline */
-            display: block; /* Ensure the link behaves like a block element */
+            text-decoration: none;
+            display: block;
+            background-color: #fff;
+            border-radius: 16px;
+            padding: 16px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            margin-bottom: 24px;
         }
 
         .post-article.visible {
@@ -23,12 +47,8 @@
             opacity: 0;
             transition: opacity 0.5s ease;
             border: 1px solid rgba(0, 0, 0, 0.2);
-            /* viền đen mờ */
             border-radius: 8px;
-            /* bo góc nhẹ */
-            display: block;
             max-height: 250px;
-            /* giới hạn chiều cao ảnh */
             object-fit: cover;
         }
 
@@ -38,109 +58,119 @@
 
         .post-images {
             display: inline-flex;
-            /* để gallery co theo số ảnh */
             background-color: #f3f3f3;
-            /* nền xám */
             padding: 8px;
             border-radius: 10px;
             gap: 8px;
-            /* khoảng cách giữa các ảnh */
             max-width: 100%;
-            /* không tràn khỏi bài viết */
             overflow-x: auto;
-            /* cuộn ngang nếu nhiều ảnh */
         }
 
         .image-box {
             flex: 0 0 auto;
-            /* mỗi ảnh giữ kích thước riêng */
         }
     </style>
 
-    <header class="mb-6 flex items-center justify-between">
-        <h1 class="text-2xl font-bold">Danh sách bài viết</h1>
-        <a href="{{ route('posts.create') }}" class="inline-block px-4 py-2 bg-blue-600 text-white rounded-md">Đăng bài</a>
-    </header>
+    @if (auth()->check())
+        <a href="#" id="openPostModal" class="post-creation-form text-gray-400 text-base">
+            <img src="{{ asset('storage/' . (Auth::user()->avatar ?? '')) }}" alt="{{ Auth::user()->name }}"
+                class="h-10 w-10 rounded-full object-cover"
+                onerror="this.onerror=null;this.src='{{ asset('images/default-avatar.png') }}';">
+            <span>Bạn đang nghĩ gì?</span>
+        </a>
+    @endif
 
     @foreach ($posts as $post)
-        <a href="{{ route('posts.show', $post) }}" class="text-decoration-none">
-            <article class="mb-6 bg-white rounded-2xl shadow-sm p-4 post-article" data-id="{{ $post->id }}">
-                <div class="flex items-start gap-4">
-                    {{-- Avatar --}}
-                    <div class="flex-shrink-0">
-                        <img src="{{ $post->user->avatar ?? asset('images/default-avatar.png') }}" alt="{{ $post->user->name }}"
-                            class="h-12 w-12 rounded-full object-cover">
-                    </div>
+        <article class="post-article" data-id="{{ $post->id }}">
+            <div class="flex items-start gap-4">
+                <!-- Avatar -->
+                <div class="flex-shrink-0">
+                    <a href="{{ route('users.show', $post->user->mention) }}">
+                        <img src="{{ asset('storage/' . ($post->user->avatar ?? '')) }}" alt="{{ $post->user->name }}"
+                            class="h-24 w-24 rounded-full object-cover"
+                            onerror="this.onerror=null;this.src='{{ asset('images/default-avatar.png') }}';">
+                    </a>
+                </div>
 
-                    <div class="flex-1">
-                        <div class="flex items-center justify-between">
-                            <div>
+                <div class="flex-1">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <a href="{{ route('posts.show', [$post->user->mention, $post->slug]) }}"
+                                class="hover:underline">
                                 <h2 class="text-lg font-semibold">{{ $post->title }}</h2>
-                                <div class="text-sm text-gray-500">
-                                    Bởi <strong>{{ $post->user->name }}</strong>
-                                    <div>
-                                        {{ $post->created_at->format('d/m/Y') }} · {{ $post->created_at->diffForHumans() }}
-                                    </div>
+                            </a>
+
+                            <div class="text-sm text-gray-500">
+                                Bởi <strong>{{ $post->user->name }}</strong>
+                                <div>
+                                    {{ $post->created_at->format('d/m/Y') }} ·
+                                    {{ $post->created_at->diffForHumans() }}
                                 </div>
                             </div>
                         </div>
+                    </div>
 
-                        {{-- Content --}}
-                        <p class="mt-3 text-sm text-gray-800 line-clamp-3">{!! nl2br(e($post->content)) !!}</p>
+                    <!-- Content -->
+                    <p class="mt-3 text-sm text-gray-800 line-clamp-3">{!! nl2br(e($post->content)) !!}</p>
 
-                        {{-- Hashtags --}}
-                        @if (!empty($post->hashtag))
-                            <div class="mt-3 flex flex-wrap gap-2">
-                                @foreach (explode(',', $post->hashtag) as $tag)
-                                    <span
-                                        class="text-xs px-2 py-1 bg-gray-100 rounded-full text-gray-600">{{ trim($tag) }}</span>
+                    <!-- Hashtags -->
+                    @if (!empty($post->hashtag))
+                        <div class="mt-3 flex flex-wrap gap-2">
+                            @foreach (explode(',', $post->hashtag) as $tag)
+                                <span
+                                    class="text-xs px-2 py-1 bg-gray-100 rounded-full text-gray-600">{{ trim($tag) }}</span>
+                            @endforeach
+                        </div>
+                    @endif
+
+                    <!-- Media gallery -->
+                    @if ($post->media && $post->media->count())
+                        <div class="mt-4">
+                            <div class="post-images">
+                                @foreach ($post->media as $m)
+                                    <div class="image-box mr-2">
+                                        @if ($m->media_type === 'image')
+                                            <img data-src="{{ asset('storage/' . $m->media_path) }}" alt="Ảnh bài viết"
+                                                class="post-image" loading="lazy">
+                                        @elseif ($m->media_type === 'video')
+                                            <video controls class="rounded-lg max-h-60">
+                                                <source src="{{ asset('storage/' . $m->media_path) }}" type="video/mp4">
+                                                Trình duyệt không hỗ trợ video.
+                                            </video>
+                                        @endif
+                                    </div>
                                 @endforeach
                             </div>
-                        @endif
-
-                        {{-- Images gallery --}}
-                        @if ($post->images && $post->images->count())
-                            <div class="mt-4">
-                                <div class="post-images fade-right">
-                                    @foreach ($post->images as $img)
-                                        <div class="image-box mr-2">
-                                            <img data-src="{{ asset('storage/' . $img->image_path) }}" alt="Ảnh bài viết"
-                                                class="post-image" loading="lazy">
-                                        </div>
-                                    @endforeach
-                                </div>
-                            </div>
-                        @endif
-
-                        {{-- Actions (like/share/comment) --}}
-                        <div class="mt-4 flex items-center gap-4 text-sm text-gray-600">
-                            <div class="flex items-center gap-2">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
-                                    stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" />
-                                </svg>
-                                <span>{{ $post->likes ?? 0 }}</span>
-                            </div>
-
-                            <div class="flex items-center gap-2">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
-                                    stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8s-9-3.582-9-8 4.03-8 9-8 9 3.582 9 8z" />
-                                </svg>
-                                <span>{{ $post->shares ?? 0 }}</span>
-                            </div>
-
-                            <div class="ml-auto text-gray-400">{{ $post->views ?? 0 }} lượt xem</div>
                         </div>
+                    @endif
+                    <!-- Actions (like/share/comment) -->
+                    <div class="mt-4 flex items-center gap-4 text-sm text-gray-600">
+                        <div class="flex items-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
+                                stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" />
+                            </svg>
+                            <span>{{ $post->likes ?? 0 }}</span>
+                        </div>
+
+                        <div class="flex items-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
+                                stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8s-9-3.582-9-8 4.03-8 9-8 9 3.582 9 8z" />
+                            </svg>
+                            <span>{{ $post->shares ?? 0 }}</span>
+                        </div>
+
+                        <div class="ml-auto text-gray-400">{{ $post->views ?? 0 }} lượt xem</div>
                     </div>
                 </div>
-            </article>
-        </a>
+            </div>
+        </article>
     @endforeach
 
     <script>
-        // JavaScript for lazy loading posts and images using Intersection Observer
+        // JavaScript for lazy loading posts and images
         document.addEventListener('DOMContentLoaded', () => {
             const articles = document.querySelectorAll('.post-article');
             const images = document.querySelectorAll('.post-image');
@@ -154,7 +184,7 @@
                     }
                 });
             }, {
-                rootMargin: '0px 0px 100px 0px', // Trigger 100px before the element is visible
+                rootMargin: '0px 0px 100px 0px',
                 threshold: 0.1
             });
 
@@ -163,7 +193,7 @@
                 entries.forEach(entry => {
                     if (entry.isIntersecting) {
                         const img = entry.target;
-                        img.src = img.dataset.src; // Load the image by setting src
+                        img.src = img.dataset.src;
                         img.classList.add('visible');
                         observer.unobserve(img);
                     }

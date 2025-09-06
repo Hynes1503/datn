@@ -101,7 +101,7 @@
                     {{-- Images gallery --}}
                     @if ($post->images && $post->images->count())
                         <div class="mt-4">
-                            <div class="post-images fade-right">
+                            <div class="post-images">
                                 @foreach ($post->images as $img)
                                     <div class="image-box mr-2">
                                         <img data-src="{{ asset('storage/' . $img->image_path) }}" alt="Ảnh bài viết"
