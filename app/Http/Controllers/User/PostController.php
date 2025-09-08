@@ -222,6 +222,23 @@ class PostController extends Controller
         }
         $post->delete();
 
-        return redirect()->route('posts.index')->with('success', 'Xóa bài viết thành công!');
+        return redirect()->back()->with('success', 'Xóa bài viết thành công!');
+    }
+    public function toggleLike(Request $request, $user, Post $post)
+    {
+        $authUser = auth()->user();
+
+        if ($post->isLikedBy($authUser)) {
+            $post->likes()->detach($authUser->id);
+        } else {
+            $post->likes()->attach($authUser->id);
+        }
+
+        if ($request->ajax()) {
+            $html = view('posts._like', ['post' => $post->fresh()])->render();
+            return response()->json(['html' => $html]);
+        }
+
+        return back();
     }
 }

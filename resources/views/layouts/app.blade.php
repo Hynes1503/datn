@@ -46,6 +46,7 @@
             border-radius: 0.5rem;
             flex: 0 0 auto;
         }
+
         .post-images.scrolled-to-end::after {
             display: none;
         }
@@ -90,13 +91,57 @@
             background: #f3f4f6;
             color: #111827;
         }
+
+        .alert-container {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 100;
+        }
+
+        .alert-box {
+            width: 20rem;
+            padding: 0.75rem 1rem;
+            border-radius: 0.5rem;
+            margin-bottom: 1rem;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            transition-opacity: 0.3s;
+            opacity: 1;
+            position: relative;
+        }
     </style>
 </head>
 
 <body class="bg-gray-200 text-gray-900 min-h-screen flex">
+    <!-- Alert Container -->
+    <div class="alert-container">
+        @if (session('success'))
+            <div class="alert-box bg-green-100 border border-green-300 text-green-700">
+                <span>{{ session('success') }}</span>
+                <button class="absolute right-2 top-2 text-green-700 close-alert">&times;</button>
+            </div>
+        @endif
+        @if (session('error'))
+            <div class="alert-box bg-red-100 border border-red-300 text-red-700">
+                <span>{{ session('error') }}</span>
+                <button class="absolute right-2 top-2 text-red-700 close-alert">&times;</button>
+            </div>
+        @endif
+        @if (session('warning'))
+            <div class="alert-box bg-yellow-100 border border-yellow-300 text-yellow-800">
+                <span>{{ session('warning') }}</span>
+                <button class="absolute right-2 top-2 text-yellow-800 close-alert">&times;</button>
+            </div>
+        @endif
+        @if (session('info'))
+            <div class="alert-box bg-blue-100 border border-blue-300 text-blue-700">
+                <span>{{ session('info') }}</span>
+                <button class="absolute right-2 top-2 text-blue-700 close-alert">&times;</button>
+            </div>
+        @endif
+    </div>
     <!-- Navbar -->
     @include('layouts.navbar')
-
     <!-- Content Area -->
     <div class="flex-1 flex justify-center p-4">
         <div class="w-full max-w-3xl">
@@ -117,7 +162,6 @@
             @yield('content')
         </div>
     </div>
-
     <script>
         // --- Handle dropdown ---
         const dropdownToggle = document.getElementById('dropdownToggle');
@@ -138,11 +182,9 @@
                 e.preventDefault();
                 dropdownLabel.textContent = item.textContent;
                 dropdownMenu.classList.remove('active');
-
                 // Reset icon về chevron-right
                 dropdownIcon.classList.remove('fa-chevron-down');
                 dropdownIcon.classList.add('fa-chevron-right');
-
                 // Điều hướng
                 window.location.href = item.getAttribute('href');
             });
@@ -167,6 +209,27 @@
                 }
             });
         }
+
+        // --- Handle auto-dismiss alerts ---
+        document.querySelectorAll('.alert-box').forEach(alert => {
+            setTimeout(() => {
+                alert.style.opacity = '0';
+                setTimeout(() => {
+                    alert.remove();
+                }, 300); // Wait for fade-out transition to complete
+            }, 2000); // Auto-dismiss after 2 seconds
+
+            // Handle manual close
+            const closeButton = alert.querySelector('.close-alert');
+            if (closeButton) {
+                closeButton.addEventListener('click', () => {
+                    alert.style.opacity = '0';
+                    setTimeout(() => {
+                        alert.remove();
+                    }, 300);
+                });
+            }
+        });
     </script>
 </body>
 

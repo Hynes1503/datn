@@ -277,7 +277,7 @@
                             const comment = data.comment;
                             const commentsList = document.querySelector('.comments-list');
                             const repliesList = this.closest('.comment')?.querySelector(
-                            '.replies-list');
+                                '.replies-list');
 
                             // Log to verify data
                             console.log('New comment:', comment);
@@ -299,13 +299,13 @@
                                         <span class="text-xs text-gray-500">vừa xong</span>
                                     </div>
                                     ${comment.can_delete ? `
-                                            <form action="/@${comment.user.mention}/posts/${comment.post_id}/comments/${comment.id}"
-                                                method="POST" class="inline comment-delete-form">
-                                                <input type="hidden" name="_token" value="{{ csrf_token() }}">
-                                                <input type="hidden" name="_method" value="DELETE">
-                                                <button type="submit" class="text-red-600 hover:text-red-800 text-${isReply ? 'xs' : 'sm'}">Xóa</button>
-                                            </form>
-                                        ` : ''}
+                                                <form action="/@${comment.user.mention}/posts/${comment.post_id}/comments/${comment.id}"
+                                                    method="POST" class="inline comment-delete-form">
+                                                    <input type="hidden" name="_token" value="{{ csrf_token() }}">
+                                                    <input type="hidden" name="_method" value="DELETE">
+                                                    <button type="submit" class="text-red-600 hover:text-red-800 text-${isReply ? 'xs' : 'sm'}">Xóa</button>
+                                                </form>
+                                            ` : ''}
                                 </div>
                                 <p class="text-${isReply ? 'xs' : 'sm'} text-gray-800 mt-1">${comment.content.replace(/\n/g, '<br>')}</p>
                             </div>

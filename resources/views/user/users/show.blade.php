@@ -74,6 +74,64 @@
         .end-of-posts-line.visible {
             display: block;
         }
+
+        /* Dropdown styles */
+        .dropdown {
+            position: relative;
+            display: inline-block;
+        }
+
+        .dropdown-toggle {
+            padding: 12px;
+            border: 1px solid #e5e7eb;
+            border-radius: 9999px;
+            color: #4b5563;
+            transition: background-color 0.2s;
+            font-size: 1.25rem; /* text-xl */
+        }
+
+        .dropdown-toggle:hover {
+            background-color: #f3f3f3;
+        }
+
+        .dropdown-menu {
+            display: none;
+            position: absolute;
+            right: 0;
+            top: 100%;
+            background-color: #fff;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            min-width: 120px;
+            z-index: 10;
+        }
+
+        .dropdown-menu.show {
+            display: block;
+        }
+
+        .dropdown-menu a,
+        .dropdown-menu button {
+            display: block;
+            padding: 8px 16px;
+            color: #4b5563;
+            text-decoration: none;
+            background: none;
+            border: none;
+            width: 100%;
+            text-align: left;
+            cursor: pointer;
+        }
+
+        .dropdown-menu a:hover,
+        .dropdown-menu button:hover {
+            background-color: #f3f3f3;
+        }
+
+        .dropdown-menu button.text-red-500:hover {
+            background-color: #fee2e2;
+        }
     </style>
 
     <header class="mb-6 bg-white rounded-2xl shadow-sm p-6 flex items-center gap-6">
@@ -142,6 +200,23 @@
                                     </div>
                                 </div>
                             </div>
+                            @if (auth()->check() && auth()->user()->id === $post->user_id)
+                                <div class="dropdown">
+                                    <button class="dropdown-toggle" type="button" data-post-id="{{ $post->id }}">
+                                        <i class="fa-solid fa-ellipsis-vertical"></i>
+                                    </button>
+                                    <div class="dropdown-menu" id="dropdown-menu-{{ $post->id }}">
+                                        <a href="{{ route('posts.edit', [$post->user->mention, $post->slug]) }}">Sửa</a>
+                                        <form action="{{ route('posts.destroy', [$post->user->mention, $post->slug]) }}"
+                                            method="POST" class="delete-form">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="text-red-500"
+                                                onclick="return confirm('Bạn có chắc chắn muốn xóa bài viết này?');">Xóa</button>
+                                        </form>
+                                    </div>
+                                </div>
+                            @endif
                         </div>
 
                         <p class="mt-3 text-sm text-gray-800 line-clamp-3">{!! nl2br(e($post->content)) !!}</p>
@@ -231,6 +306,37 @@
     <script>
         // JavaScript for lazy loading posts and images using Intersection Observer
         document.addEventListener('DOMContentLoaded', () => {
+            // Dropdown toggle functionality
+            const dropdownToggles = document.querySelectorAll('.dropdown-toggle');
+
+            dropdownToggles.forEach(toggle => {
+                toggle.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const dropdownMenu = toggle.nextElementSibling;
+                    const isShown = dropdownMenu.classList.contains('show');
+
+                    // Close all other dropdowns
+                    document.querySelectorAll('.dropdown-menu.show').forEach(menu => {
+                        if (menu !== dropdownMenu) {
+                            menu.classList.remove('show');
+                        }
+                    });
+
+                    // Toggle the current dropdown
+                    dropdownMenu.classList.toggle('show', !isShown);
+                });
+            });
+
+            // Close dropdown when clicking outside
+            document.addEventListener('click', (e) => {
+                if (!e.target.closest('.dropdown')) {
+                    document.querySelectorAll('.dropdown-menu.show').forEach(menu => {
+                        menu.classList.remove('show');
+                    });
+                }
+            });
+
+            // Lazy loading for articles
             const articles = document.querySelectorAll('.post-article');
             const images = document.querySelectorAll('.post-image');
             const endOfPosts = document.getElementById('endOfPosts');

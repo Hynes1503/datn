@@ -1,209 +1,211 @@
-<!doctype html>
-<html lang="vi">
+@extends('layouts.app')
 
-<head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Threads-like - Laravel Blade</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-</head>
+@section('title', 'Trang chủ')
+@section('menuTitle', 'Sự kiện mới')
 
-<body class="bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-100">
-    <div class="max-w-6xl mx-auto grid grid-cols-12 gap-4 p-4">
+@section('content')
+    <style>
+        /* CSS for post creation form */
+        .post-creation-form {
+            background-color: #fff;
+            border-radius: 16px;
+            padding: 16px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
 
-        <!-- LEFT NAV -->
-        <aside class="col-span-12 md:col-span-3 hidden md:block">
-            <nav class="space-y-4 sticky top-4">
-                <div class="p-4 bg-white dark:bg-gray-800 rounded-2xl shadow-sm">
-                    <h1 class="text-xl font-bold">Threads Clone</h1>
+        .post-creation-form img {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        /* CSS for lazy loading posts and images */
+        .post-article {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+            text-decoration: none;
+            display: block;
+            background-color: #fff;
+            border-radius: 16px;
+            padding: 16px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            margin-bottom: 24px;
+        }
+
+        .post-article.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .post-image {
+            opacity: 0;
+            transition: opacity 0.5s ease;
+            border: 1px solid rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+            max-height: 250px;
+            object-fit: cover;
+        }
+
+        .post-image.visible {
+            opacity: 1;
+        }
+
+        .post-images {
+            display: inline-flex;
+            background-color: #f3f3f3;
+            padding: 8px;
+            border-radius: 10px;
+            gap: 8px;
+            max-width: 100%;
+            overflow-x: auto;
+        }
+
+        .image-box {
+            flex: 0 0 auto;
+        }
+    </style>
+
+    @if (auth()->check())
+        <a href="#" id="openPostModal" class="post-creation-form text-gray-400 text-base">
+            <img src="{{ asset('storage/' . (Auth::user()->avatar ?? '')) }}" alt="{{ Auth::user()->name }}"
+                class="h-10 w-10 rounded-full object-cover"
+                onerror="this.onerror=null;this.src='{{ asset('images/default-avatar.png') }}';">
+            <span>Bạn đang nghĩ gì?</span>
+        </a>
+    @endif
+
+    @foreach ($posts as $post)
+        <article class="post-article" data-id="{{ $post->id }}">
+            <div class="flex items-start gap-4">
+                <!-- Avatar -->
+                <div class="flex-shrink-0">
+                    <a href="{{ route('users.show', $post->user->mention) }}">
+                        <img src="{{ asset('storage/' . ($post->user->avatar ?? '')) }}" alt="{{ $post->user->name }}"
+                            class="h-24 w-24 rounded-full object-cover"
+                            onerror="this.onerror=null;this.src='{{ asset('images/default-avatar.png') }}';">
+                    </a>
                 </div>
-                <ul class="space-y-2">
-                    <li class="p-3 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-800">Home</li>
-                    <li class="p-3 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-800">Explore</li>
-                    <li class="p-3 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-800">Notifications</li>
-                    <li class="p-3 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-800">Bookmarks</li>
-                </ul>
-                <div class="p-4 bg-white dark:bg-gray-800 rounded-2xl shadow-sm">
-                    <div class="flex items-center space-x-3">
-                        <img src="{{ $user['avatar'] }}" alt="avatar" class="w-12 h-12 rounded-full" />
+
+                <div class="flex-1">
+                    <div class="flex items-center justify-between">
                         <div>
-                            <div class="font-semibold">{{ $user['name'] }}</div>
-                            <div class="text-sm text-gray-500">@{{ $user['username'] }}</div>
-                        </div>
-                    </div>
-                </div>
-            </nav>
-        </aside>
+                            <a href="{{ route('posts.show', [$post->user->mention, $post->slug]) }}"
+                                class="hover:underline">
+                                <h2 class="text-lg font-semibold">{{ $post->title }}</h2>
+                            </a>
 
-        <!-- FEED / MAIN -->
-        <main class="col-span-12 md:col-span-6">
-            <!-- Composer -->
-            <div class="bg-white dark:bg-gray-800 p-4 rounded-2xl shadow-sm mb-4">
-                <form method="POST" action="{{ route('threads.post') }}" enctype="multipart/form-data">
-                    @csrf
-                    <div class="flex space-x-3">
-                        <img src="{{ $user['avatar'] }}" class="w-12 h-12 rounded-full" alt="avatar" />
-                        <div class="flex-1">
-                            <textarea name="content" rows="3" class="w-full bg-transparent focus:outline-none"
-                                placeholder="What's happening?"></textarea>
-                            <div class="flex justify-between items-center mt-2">
-                                <div class="text-sm text-gray-500">Add mock images (demo)</div>
-                                <input type="file" name="media" accept="image/*" />
-                            </div>
-                            <div class="mt-3 text-right">
-                                <button class="px-4 py-2 bg-blue-500 text-white rounded-lg">Post</button>
-                            </div>
-                        </div>
-                    </div>
-                </form>
-            </div>
-
-            <!-- Posts -->
-            <div id="feed" class="space-y-4">
-                @foreach ($posts as $post)
-                    <article class="bg-white dark:bg-gray-800 p-4 rounded-2xl shadow-sm">
-                        <div class="flex space-x-3">
-                            <img src="{{ $post['author']['avatar'] }}" class="w-12 h-12 rounded-full" />
-                            <div class="flex-1">
-                                <div class="flex justify-between">
-                                    <div>
-                                        <div class="font-semibold">
-                                            {{ $post['author']['name'] }}
-                                            <span class="text-sm text-gray-500">@{{ $post['author']['username'] }} •
-                                                {{ $post['created_at'] }}</span>
-                                        </div>
-                                        <div class="mt-2">{{ $post['content'] }}</div>
-                                    </div>
-                                    <div class="text-gray-400">•••</div>
-                                </div>
-
-                                @if (!empty($post['media']))
-                                    <div class="mt-3">
-                                        <img src="{{ $post['media'] }}" class="w-full rounded-xl" />
-                                    </div>
-                                @endif
-
-                                <div class="mt-3 flex items-center justify-between text-sm text-gray-500">
-                                    <div class="flex items-center space-x-4">
-                                        <form method="POST" action="{{ route('threads.like', $post['id']) }}">
-                                            @csrf
-                                            <button class="flex items-center space-x-1">
-                                                <span>{{ $post['likes'] }}</span><span>Like</span>
-                                            </button>
-                                        </form>
-                                        <button onclick="openReplyModal({{ $post['id'] }})">Reply
-                                            ({{ count($post['replies']) }})</button>
-                                        <button>Repost</button>
-                                    </div>
-                                    <div>Share</div>
-                                </div>
-
-                                <!-- Replies preview -->
-                                @if (count($post['replies']) > 0)
-                                    <div class="mt-3 border-t pt-3">
-                                        @foreach (array_slice($post['replies'], 0, 2) as $reply)
-                                            <div class="flex items-start space-x-3 mb-3">
-                                                <img src="{{ $reply['author']['avatar'] }}"
-                                                    class="w-8 h-8 rounded-full" />
-                                                <div>
-                                                    <div class="text-sm font-semibold">
-                                                        {{ $reply['author']['name'] }}
-                                                        <span
-                                                            class="text-xs text-gray-400">@{{ $reply['author']['username'] }}</span>
-                                                    </div>
-                                                    <div class="text-sm">{{ $reply['content'] }}</div>
-                                                </div>
-                                            </div>
-                                        @endforeach
-                                    </div>
-                                @endif
-                            </div>
-                        </div>
-                    </article>
-                @endforeach
-
-                <div class="text-center mt-4">
-                    <form method="POST" action="{{ route('threads.loadMore') }}">
-                        @csrf
-                        <button class="px-4 py-2 bg-gray-200 dark:bg-gray-700 rounded-lg">Load more</button>
-                    </form>
-                </div>
-            </div>
-        </main>
-
-        <!-- RIGHT SIDEBAR -->
-        <aside class="col-span-12 md:col-span-3 hidden md:block">
-            <div class="space-y-4 sticky top-4">
-                <div class="bg-white dark:bg-gray-800 p-4 rounded-2xl shadow-sm">
-                    <input type="text" placeholder="Search"
-                        class="w-full bg-gray-100 dark:bg-gray-700 p-2 rounded-lg" />
-                </div>
-
-                <div class="bg-white dark:bg-gray-800 p-4 rounded-2xl shadow-sm">
-                    <h3 class="font-semibold mb-2">Trending</h3>
-                    <ul class="space-y-2 text-sm text-gray-500">
-                        @foreach ($trends as $t)
-                            <li>#{{ $t }}</li>
-                        @endforeach
-                    </ul>
-                </div>
-
-                <div class="bg-white dark:bg-gray-800 p-4 rounded-2xl shadow-sm">
-                    <h3 class="font-semibold mb-2">Who to follow</h3>
-                    @foreach ($whoToFollow as $f)
-                        <div class="flex items-center justify-between mb-3">
-                            <div class="flex items-center space-x-3">
-                                <img src="{{ $f['avatar'] }}" class="w-10 h-10 rounded-full" />
+                            <div class="text-sm text-gray-500">
+                                Bởi <strong>{{ $post->user->name }}</strong>
                                 <div>
-                                    <div class="font-semibold">{{ $f['name'] }}</div>
-                                    <div class="text-sm text-gray-500">@{{ $f['username'] }}</div>
+                                    {{ $post->created_at->format('d/m/Y') }} ·
+                                    {{ $post->created_at->diffForHumans() }}
                                 </div>
                             </div>
-                            <form method="POST" action="{{ route('threads.follow', $f['id']) }}">
-                                @csrf
-                                <button class="px-3 py-1 bg-blue-500 text-white rounded-lg">
-                                    {{ $f['followed'] ? 'Following' : 'Follow' }}
-                                </button>
-                            </form>
                         </div>
-                    @endforeach
+                    </div>
+
+                    <!-- Content -->
+                    <p class="mt-3 text-sm text-gray-800 line-clamp-3">{!! nl2br(e($post->content)) !!}</p>
+
+                    <!-- Hashtags -->
+                    @if (!empty($post->hashtag))
+                        <div class="mt-3 flex flex-wrap gap-2">
+                            @foreach (explode(',', $post->hashtag) as $tag)
+                                <span
+                                    class="text-xs px-2 py-1 bg-gray-100 rounded-full text-gray-600">{{ trim($tag) }}</span>
+                            @endforeach
+                        </div>
+                    @endif
+
+                    <!-- Media gallery -->
+                    @if ($post->media && $post->media->count())
+                        <div class="mt-4">
+                            <div class="post-images">
+                                @foreach ($post->media as $m)
+                                    <div class="image-box mr-2">
+                                        @if ($m->media_type === 'image')
+                                            <img data-src="{{ asset('storage/' . $m->media_path) }}" alt="Ảnh bài viết"
+                                                class="post-image" loading="lazy">
+                                        @elseif ($m->media_type === 'video')
+                                            <video controls class="rounded-lg max-h-60">
+                                                <source src="{{ asset('storage/' . $m->media_path) }}" type="video/mp4">
+                                                Trình duyệt không hỗ trợ video.
+                                            </video>
+                                        @endif
+                                    </div>
+                                @endforeach
+                            </div>
+                        </div>
+                    @endif
+                    <!-- Actions (like/share/comment) -->
+                    <div class="mt-4 flex items-center gap-4 text-sm text-gray-600">
+                        <div class="flex items-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
+                                stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" />
+                            </svg>
+                            <span>{{ $post->likes ?? 0 }}</span>
+                        </div>
+
+                        <div class="flex items-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
+                                stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8s-9-3.582-9-8 4.03-8 9-8 9 3.582 9 8z" />
+                            </svg>
+                            <span>{{ $post->shares ?? 0 }}</span>
+                        </div>
+
+                        <div class="ml-auto text-gray-400">{{ $post->views ?? 0 }} lượt xem</div>
+                    </div>
                 </div>
             </div>
-        </aside>
-    </div>
-
-    <!-- Reply modal -->
-    <div id="replyModal" class="fixed inset-0 bg-black bg-opacity-40 hidden items-center justify-center">
-        <div class="bg-white dark:bg-gray-800 p-6 rounded-2xl w-full max-w-xl">
-            <h3 class="font-semibold mb-3">Reply</h3>
-            <form id="replyForm" method="POST" action="{{ route('threads.reply', 0) }}">
-                @csrf
-                <input type="hidden" name="post_id" id="modalPostId" value="" />
-                <textarea name="reply" rows="4" class="w-full bg-transparent focus:outline-none"
-                    placeholder="Write a reply..."></textarea>
-                <div class="mt-4 text-right">
-                    <button type="button" onclick="closeReplyModal()"
-                        class="mr-2 px-4 py-2 rounded-lg">Cancel</button>
-                    <button type="submit" class="px-4 py-2 bg-blue-500 text-white rounded-lg">Send</button>
-                </div>
-            </form>
-        </div>
-    </div>
+        </article>
+    @endforeach
 
     <script>
-        function openReplyModal(postId) {
-            document.getElementById('modalPostId').value = postId;
-            let form = document.getElementById('replyForm');
-            form.action = form.action.replace(/\\d+$/, postId);
-            document.getElementById('replyModal').classList.remove('hidden');
-            document.getElementById('replyModal').classList.add('flex');
-        }
+        // JavaScript for lazy loading posts and images
+        document.addEventListener('DOMContentLoaded', () => {
+            const articles = document.querySelectorAll('.post-article');
+            const images = document.querySelectorAll('.post-image');
 
-        function closeReplyModal() {
-            document.getElementById('replyModal').classList.add('hidden');
-            document.getElementById('replyModal').classList.remove('flex');
-        }
+            // Observer for articles
+            const articleObserver = new IntersectionObserver((entries, observer) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, {
+                rootMargin: '0px 0px 100px 0px',
+                threshold: 0.1
+            });
+
+            // Observer for images
+            const imageObserver = new IntersectionObserver((entries, observer) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        const img = entry.target;
+                        img.src = img.dataset.src;
+                        img.classList.add('visible');
+                        observer.unobserve(img);
+                    }
+                });
+            }, {
+                rootMargin: '0px 0px 100px 0px',
+                threshold: 0.1
+            });
+
+            // Observe all articles and images
+            articles.forEach(article => articleObserver.observe(article));
+            images.forEach(image => imageObserver.observe(image));
+        });
     </script>
-</body>
-
-</html>
+@endsection

@@ -1,100 +1,65 @@
 <nav class="fixed top-0 left-0 h-full w-20 bg-white border-r border-gray-200 flex flex-col items-center py-6 z-50">
     <!-- Logo -->
     <a href="{{ route('home') }}" class="mb-8">
-        <img src="{{ asset('images/threads-logo.svg') }}" alt="Threads" class="h-8 w-8">
+        <img src="{{ asset('images/logo.svg') }}" alt="EPU Hub" class="h-8 w-8">
     </a>
 
     <!-- Navigation -->
-    <div class="flex flex-col items-center gap-8 flex-1">
+    <div class="flex flex-col items-center justify-center gap-8 flex-1 h-full">
         <!-- Home -->
         <a href="{{ route('home') }}"
-            class="text-gray-900 hover:scale-110 transition-transform {{ request()->routeIs('home') ? 'font-bold' : '' }}"
+            class="text-gray-900 hover:scale-110 hover:bg-gray-100 p-2 rounded-full transition-all {{ request()->routeIs('home') ? 'font-bold' : '' }}"
             title="Trang chủ">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24"
-                stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M3 12l2-2m0 0l7-7 7 7m-9 5v6h4v-6m-7-9h14" />
-            </svg>
+            <i class="fa-solid fa-house"></i>
         </a>
 
         <!-- Search -->
-        <a href="#" class="text-gray-900 hover:scale-110 transition-transform" title="Tìm kiếm">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24"
-                stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
+        <a href="#" class="text-gray-900 hover:scale-110 hover:bg-gray-100 p-2 rounded-full transition-all"
+            title="Tìm kiếm">
+            <i class="fa-solid fa-magnifying-glass"></i>
         </a>
 
         <!-- Create Post -->
-        <a href="#" class="text-gray-900 hover:scale-110 transition-transform open-post-modal" title="Đăng bài">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24"
-                stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-            </svg>
+        <a href="#"
+            class="text-gray-900 hover:scale-110 hover:bg-gray-100 p-2 rounded-full transition-all open-post-modal"
+            title="Đăng bài">
+            <i class="fa-solid fa-plus"></i>
         </a>
 
         <!-- Activity -->
-        <a href="#" class="text-gray-900 hover:scale-110 transition-transform" title="Hoạt động">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24"
-                stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5
-                         4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5
-                         4.5 0 00-6.364 0z" />
-            </svg>
+        <a href="#" class="text-gray-900 hover:scale-110 hover:bg-gray-100 p-2 rounded-full transition-all"
+            title="Hoạt động">
+            <i class="fa-regular fa-heart"></i>
         </a>
 
-        <!-- Profile -->
-        {{-- <a href="{{ route('users.show', Auth::user()->mention) }}"
-           class="text-gray-900 hover:scale-110 transition-transform"
-           title="Hồ sơ">
-            <img src="{{ Auth::user()->avatar ? asset('storage/'.Auth::user()->avatar) : asset('images/default-avatar.png') }}"
-                 class="h-8 w-8 rounded-full object-cover border" alt="Avatar">
-        </a> --}}
-    </div>
+        <!-- Profile & Logout Dropdown -->
+        @if (Auth::check())
+            <div class="relative">
+                <!-- Avatar button -->
+                <button id="avatarMenuBtn" type="button"
+                    class="flex items-center hover:scale-110 hover:bg-gray-100 p-2 rounded-full transition-all focus:outline-none">
+                    <img src="{{ Auth::user()->avatar ? asset('storage/' . Auth::user()->avatar) : asset('images/default-avatar.png') }}"
+                        class="h-8 w-8 rounded-full object-cover border" alt="Avatar">
+                </button>
 
-    <!-- Logout -->
-    {{-- @if (Auth::check())
-        <form id="logoutForm" action="{{ route('logout') }}" method="POST" class="mt-6">
-            @csrf
-            <button type="submit" class="text-gray-900 hover:scale-110 transition-transform" title="Đăng xuất">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                          d="M17 16l4-4m0 0l-4-4m4 4H7m6 
-                             4v1a3 3 0 01-3 3H6a3 3 
-                             0 01-3-3V7a3 3 0 013-3h3a3 
-                             3 0 013 3v1"/>
-                </svg>
-            </button>
-        </form>
-    @endif --}}
-
-    <!-- Profile & Logout Dropdown -->
-    @if (Auth::check())
-        <div class="relative">
-            <!-- Avatar button -->
-            <button id="avatarMenuBtn" type="button" class="flex items-center focus:outline-none">
-                <img src="{{ Auth::user()->avatar ? asset('storage/' . Auth::user()->avatar) : asset('images/default-avatar.png') }}"
-                    class="h-8 w-8 rounded-full object-cover border" alt="Avatar">
-            </button>
-
-            <!-- Dropdown menu -->
-            <div id="avatarMenu"
-                class="absolute bottom-0 left-10 mb-10 hidden bg-white border border-gray-200 rounded-xl shadow-lg w-40 z-50">
-                <a href="{{ route('users.show', Auth::user()->mention) }}"
-                    class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-t-xl">
-                    Hồ sơ
-                </a>
-                <form id="logoutForm" action="{{ route('logout') }}" method="POST">
-                    @csrf
-                    <button type="submit"
-                        class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-b-xl">
-                        Đăng xuất
-                    </button>
-                </form>
+                <!-- Dropdown menu -->
+                <div id="avatarMenu"
+                    class="absolute bottom-0 left-10 mb-10 hidden bg-white border border-gray-200 rounded-xl shadow-lg w-40 z-50">
+                    <a href="{{ route('users.show', Auth::user()->mention) }}"
+                        class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-t-xl">
+                        Hồ sơ
+                    </a>
+                    <form id="logoutForm" action="{{ route('logout') }}" method="POST">
+                        @csrf
+                        <button type="submit"
+                            class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-b-xl">
+                            Đăng xuất
+                        </button>
+                    </form>
+                </div>
             </div>
-        </div>
-    @endif
+        @endif
+    </div>
 
     <!-- Modal -->
     @if (Auth::check())
@@ -122,11 +87,14 @@
                         </div>
                     </div>
 
+                    <!-- Preview Media -->
+                    <div id="mediaPreview" class="mt-3 flex flex-row gap-2 overflow-x-auto white-space-nowrap"></div>
+
                     <!-- Thêm media + hashtag -->
                     <div class="mt-3 space-y-2">
                         <!-- Media upload (ảnh + video) -->
                         <input type="file" name="media[]" multiple accept="image/*,video/*"
-                            class="w-full text-sm text-gray-600" />
+                            class="w-full text-sm text-gray-600" id="mediaInput" />
 
                         <!-- Hashtag -->
                         <input type="text" name="hashtag" placeholder="Hashtags (cách nhau bằng dấu phẩy)"
@@ -149,6 +117,7 @@
             </div>
         </div>
     @endif
+
     <style>
         /* Styling for modal */
         #postModal {
@@ -235,6 +204,24 @@
         .modal-form .cancel-button:hover {
             background-color: #d1d5db;
         }
+
+        #mediaPreview {
+            display: flex;
+            flex-direction: row;
+            gap: 8px;
+            overflow-x: auto;
+            white-space: nowrap;
+        }
+
+        #mediaPreview img,
+        #mediaPreview video {
+            max-width: 100px;
+            max-height: 100px;
+            object-fit: cover;
+            border-radius: 8px;
+            border: 1px solid #e5e7eb;
+            flex-shrink: 0;
+        }
     </style>
 
     <script>
@@ -255,12 +242,13 @@
                     avatarMenu.classList.add('hidden');
                 }
             });
-        });
-        // JavaScript for modal
-        document.addEventListener('DOMContentLoaded', () => {
+
+            // JavaScript for modal
             const modal = document.getElementById('postModal');
             const openModalButtons = document.querySelectorAll('.open-post-modal, #openPostModal');
             const closeModalBtn = document.getElementById('closePostModal');
+            const mediaInput = document.getElementById('mediaInput');
+            const mediaPreview = document.getElementById('mediaPreview');
 
             openModalButtons.forEach(button => {
                 button.addEventListener('click', (e) => {
@@ -273,6 +261,7 @@
             closeModalBtn.addEventListener('click', () => {
                 console.log('Close modal clicked'); // Debug
                 modal.classList.add('hidden');
+                mediaPreview.innerHTML = ''; // Clear preview when closing
             });
 
             // Close modal when clicking outside
@@ -280,6 +269,25 @@
                 if (e.target === modal) {
                     console.log('Clicked outside modal'); // Debug
                     modal.classList.add('hidden');
+                    mediaPreview.innerHTML = ''; // Clear preview when closing
+                }
+            });
+
+            // Preview media when selected
+            mediaInput.addEventListener('change', (e) => {
+                mediaPreview.innerHTML = ''; // Clear previous previews
+                const files = e.target.files;
+                for (const file of files) {
+                    if (file.type.startsWith('image/')) {
+                        const img = document.createElement('img');
+                        img.src = URL.createObjectURL(file);
+                        mediaPreview.appendChild(img);
+                    } else if (file.type.startsWith('video/')) {
+                        const video = document.createElement('video');
+                        video.src = URL.createObjectURL(file);
+                        video.controls = true;
+                        mediaPreview.appendChild(video);
+                    }
                 }
             });
         });

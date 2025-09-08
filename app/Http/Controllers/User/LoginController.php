@@ -31,8 +31,7 @@ class LoginController extends Controller
             $request->session()->regenerate();
 
             // Redirect to the authenticated user's profile
-            return redirect()->route('users.show', Auth::user()->mention)
-                             ->with('success', 'Đăng nhập thành công!');
+            return redirect()->route('home')->with('success', 'Đăng nhập thành công!');
         }
 
         // Return to login form with error message

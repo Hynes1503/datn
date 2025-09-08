@@ -47,4 +47,18 @@ class Post extends Model
     {
         return $this->hasMany(Comment::class)->whereNull('parent_id')->orderBy('created_at', 'desc');
     }
+    public function likes()
+    {
+        return $this->belongsToMany(User::class, 'likes', 'post_id', 'user_id')->withTimestamps();
+    }
+
+    public function getLikesCountAttribute()
+    {
+        return $this->likes()->count();
+    }
+
+    public function isLikedBy(User $user)
+    {
+        return $this->likes()->where('user_id', $user->id)->exists();
+    }
 }

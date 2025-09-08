@@ -7,6 +7,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
+
 class User extends Authenticatable
 {
     use HasFactory, Notifiable;
@@ -78,7 +79,11 @@ class User extends Authenticatable
     public function getAvatarUrlAttribute()
     {
         return $this->avatar && Storage::disk('public')->exists($this->avatar)
-            ? asset('storage/'.$this->avatar)
+            ? asset('storage/' . $this->avatar)
             : asset('images/default-avatar.png');
+    }
+    public function likes()
+    {
+        return $this->belongsToMany(Post::class, 'likes', 'user_id', 'post_id')->withTimestamps();
     }
 }
