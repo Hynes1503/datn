@@ -4,12 +4,15 @@ namespace App\Http\Controllers;
 
 use App\Models\Comment;
 use App\Models\Post;
+use App\Notifications\CommentNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class CommentController extends Controller
 {
-    // Store a new comment or reply
+    /**
+     * Lưu bình luận hoặc trả lời mới
+     */
     public function store(Request $request, $userMention, Post $post)
     {
         if (!Auth::check()) {
@@ -30,13 +33,32 @@ class CommentController extends Controller
 
         $comment->load('user');
 
+        // Gửi thông báo cho chủ bài viết (nếu không phải chính họ)
+        if (Auth::id() !== $post->user_id) {
+            $post->user->notify(new CommentNotification(Auth::user(), $post, $comment));
+        }
+
         return response()->json([
             'success' => true,
-            'comment' => $comment,
+            'comment' => [
+                'id' => $comment->id,
+                'content' => $comment->content,
+                'user' => [
+                    'id' => $comment->user->id,
+                    'name' => $comment->user->name,
+                    'mention' => $comment->user->mention,
+                    'avatar_url' => $comment->user->avatar_url,
+                ],
+                'post_id' => $post->id,
+                'created_at' => $comment->created_at->toIso8601String(),
+                'can_delete' => Auth::id() === $comment->user_id || Auth::user()->ownsPost($post),
+            ],
         ], 201);
     }
 
-    // Delete a comment
+    /**
+     * Xóa bình luận
+     */
     public function destroy($userMention, Post $post, Comment $comment)
     {
         if (!Auth::check()) {

@@ -3,16 +3,16 @@
 namespace App\Http\Controllers\User;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
 use App\Models\Post;
-use Illuminate\Support\Facades\Auth;
-// use App\Models\PostImage;
 use App\Models\User;
+use App\Models\PostMedia;
+use App\Notifications\LikeNotification;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Session;
-use App\Models\PostMedia;
+use Illuminate\Support\Str;
 
 class PostController extends Controller
 {
@@ -89,7 +89,6 @@ class PostController extends Controller
         return redirect()->route('home')->with('success', 'Đăng bài thành công!');
     }
 
-
     /**
      * Sinh slug ngẫu nhiên với độ dài $length, chỉ chứa chữ hoa và thường
      */
@@ -112,7 +111,6 @@ class PostController extends Controller
     /**
      * Hiển thị chi tiết bài viết
      */
-
     public function show(User $user, Post $post)
     {
         // Đảm bảo bài viết thuộc user
@@ -161,7 +159,7 @@ class PostController extends Controller
             'content' => 'required|string',
             'hashtag' => 'nullable|string|max:255',
             'media'   => 'nullable|array',
-            'media.*' => 'file|mimes:jpg,jpeg,png,gif,webp,mp4,mov,avi,wmv|max:51200', // 50MB
+            'media.*' => 'file|mimes:jpg,jpeg,png,gif,webp,mp4,mov,avi,webm|max:51200', // 50MB
             'delete_media' => 'nullable|array',
             'delete_media.*' => 'integer|exists:post_media,id',
         ]);
@@ -178,9 +176,9 @@ class PostController extends Controller
             foreach ($request->delete_media as $mediaId) {
                 $media = $post->media()->find($mediaId);
                 if ($media) {
-                    // Xóa file thật trong storage
+                    // Xóa file trong storage
                     Storage::disk('public')->delete($media->media_path);
-                    // Xóa record DB
+                    // Xóa record trong DB
                     $media->delete();
                 }
             }
@@ -189,7 +187,7 @@ class PostController extends Controller
         // Xử lý upload media mới
         if ($request->hasFile('media')) {
             foreach ($request->file('media') as $file) {
-                $path = $file->store('posts', 'public');
+                $path = $file->store('posts/media', 'public');
                 $type = Str::startsWith($file->getMimeType(), 'video') ? 'video' : 'image';
 
                 $post->media()->create([
@@ -215,30 +213,52 @@ class PostController extends Controller
             abort(404);
         }
 
-        // Xóa ảnh liên quan trước khi xóa bài viết
-        foreach ($post->images as $image) {
-            Storage::disk('public')->delete($image->image_path);
-            $image->delete();
+        // Xóa media liên quan trước khi xóa bài viết
+        foreach ($post->media as $media) {
+            Storage::disk('public')->delete($media->media_path);
+            $media->delete();
         }
+
+        // Xóa bài viết
         $post->delete();
 
         return redirect()->back()->with('success', 'Xóa bài viết thành công!');
     }
-    public function toggleLike(Request $request, $user, Post $post)
-    {
-        $authUser = auth()->user();
 
-        if ($post->isLikedBy($authUser)) {
+    /**
+     * Toggle like/unlike bài viết
+     */
+    public function toggleLike(Request $request, User $user, Post $post)
+    {
+        // Đảm bảo bài viết thuộc user
+        if ($post->user_id !== $user->id) {
+            abort(404);
+        }
+
+        $authUser = Auth::user();
+        if (!$authUser) {
+            return response()->json(['error' => 'Bạn cần đăng nhập để thích bài viết.'], 403);
+        }
+
+        $wasLiked = $post->isLikedBy($authUser);
+        if ($wasLiked) {
             $post->likes()->detach($authUser->id);
         } else {
             $post->likes()->attach($authUser->id);
+            // Gửi thông báo cho chủ bài viết (nếu không phải chính họ)
+            if ($authUser->id !== $post->user_id) {
+                $post->user->notify(new LikeNotification($authUser, $post));
+            }
         }
 
-        if ($request->ajax()) {
-            $html = view('posts._like', ['post' => $post->fresh()])->render();
-            return response()->json(['html' => $html]);
+        if ($request->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'liked' => !$wasLiked,
+                'likes_count' => $post->likes()->count(),
+            ]);
         }
 
-        return back();
+        return back()->with('success', $wasLiked ? 'Đã bỏ thích bài viết.' : 'Đã thích bài viết.');
     }
 }

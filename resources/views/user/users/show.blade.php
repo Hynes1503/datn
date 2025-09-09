@@ -87,7 +87,7 @@
             border-radius: 9999px;
             color: #4b5563;
             transition: background-color 0.2s;
-            font-size: 1.25rem; /* text-xl */
+            font-size: 1.25rem;
         }
 
         .dropdown-toggle:hover {
@@ -132,11 +132,63 @@
         .dropdown-menu button.text-red-500:hover {
             background-color: #fee2e2;
         }
+
+        /* Follow/Unfollow button styles */
+        .follow-btn,
+        .unfollow-btn {
+            padding: 8px 16px;
+            border: 1px solid #e5e7eb;
+            border-radius: 9999px;
+            color: #4b5563;
+            transition: background-color 0.2s, color 0.2s;
+            font-size: 0.875rem;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .follow-btn:hover {
+            background-color: #000000;
+            color: #fff;
+            border-color: #000000;
+        }
+
+        .unfollow-btn {
+            background-color: #f3f3f3;
+        }
+
+        .unfollow-btn:hover {
+            background-color: #e5e7eb;
+            color: #4b5563;
+        }
+
+        /* Tim bay */
+        .floating-heart {
+            position: absolute;
+            font-size: 1.2rem;
+            color: #ef4444; /* đỏ-500 */
+            animation: floatUp 1s ease-out forwards;
+            pointer-events: none;
+        }
+
+        @keyframes floatUp {
+            0% {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+            50% {
+                opacity: 0.8;
+                transform: translateY(-30px) scale(1.3);
+            }
+            100% {
+                opacity: 0;
+                transform: translateY(-60px) scale(0.8);
+            }
+        }
     </style>
 
     <header class="mb-6 bg-white rounded-2xl shadow-sm p-6 flex items-center gap-6">
-        <img src="{{ $user->avatar ? asset('storage/' . $user->avatar) : asset('images/default-avatar.png') }}"
-            alt="{{ $user->name }}" class="h-24 w-24 rounded-full object-cover">
+        <img src="{{ $user->avatar_url }}" alt="{{ $user->name }}" class="h-24 w-24 rounded-full object-cover">
         <div class="flex-1">
             <div class="flex items-center justify-between">
                 <div>
@@ -152,6 +204,18 @@
                                 <i class="fa-solid fa-user-pen"></i>
                             </a>
                         </div>
+                    @elseif (auth()->check())
+                        <form
+                            action="{{ auth()->user()->isFollowing($user) ? route('unfollow', $user) : route('follow', $user) }}"
+                            method="POST">
+                            @csrf
+                            <button type="submit"
+                                class="{{ auth()->user()->isFollowing($user) ? 'unfollow-btn' : 'follow-btn' }}">
+                                <i
+                                    class="fa-solid {{ auth()->user()->isFollowing($user) ? 'fa-user-minus' : 'fa-user-plus' }}"></i>
+                                {{ auth()->user()->isFollowing($user) ? 'Bỏ theo dõi' : 'Theo dõi' }}
+                            </button>
+                        </form>
                     @endif
                 </div>
             </div>
@@ -185,13 +249,16 @@
             <article class="mb-6 bg-white rounded-2xl shadow-sm p-4 post-article" data-id="{{ $post->id }}">
                 <div class="flex items-start gap-4">
                     <div class="flex-shrink-0">
-                        <img src="{{ $user->avatar ? asset('storage/' . $user->avatar) : asset('images/default-avatar.png') }}"
-                            alt="{{ $post->user->name }}" class="h-12 w-12 rounded-full object-cover">
+                        <img src="{{ $user->avatar_url }}" alt="{{ $post->user->name }}"
+                            class="h-12 w-12 rounded-full object-cover">
                     </div>
                     <div class="flex-1">
                         <div class="flex items-center justify-between">
                             <div>
-                                <h2 class="text-lg font-semibold">{{ $post->title }}</h2>
+                                <a href="{{ route('posts.show', [$post->user->mention, $post->slug]) }}"
+                                    class="hover:underline">
+                                    <h2 class="text-lg font-semibold">{{ $post->title }}</h2>
+                                </a>
                                 <div class="text-sm text-gray-500">
                                     Bởi <strong>{{ $post->user->name }}</strong>
                                     <div>
@@ -254,12 +321,7 @@
 
                         <div class="mt-4 flex items-center gap-4 text-sm text-gray-600">
                             <div class="flex items-center gap-2">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
-                                    stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M5 15l7-7 7 7" />
-                                </svg>
-                                <span>{{ $post->likes ?? 0 }}</span>
+                                @include('layouts.like', ['post' => $post])
                             </div>
                             <div class="flex items-center gap-2">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
@@ -304,38 +366,7 @@
     @endif
 
     <script>
-        // JavaScript for lazy loading posts and images using Intersection Observer
         document.addEventListener('DOMContentLoaded', () => {
-            // Dropdown toggle functionality
-            const dropdownToggles = document.querySelectorAll('.dropdown-toggle');
-
-            dropdownToggles.forEach(toggle => {
-                toggle.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    const dropdownMenu = toggle.nextElementSibling;
-                    const isShown = dropdownMenu.classList.contains('show');
-
-                    // Close all other dropdowns
-                    document.querySelectorAll('.dropdown-menu.show').forEach(menu => {
-                        if (menu !== dropdownMenu) {
-                            menu.classList.remove('show');
-                        }
-                    });
-
-                    // Toggle the current dropdown
-                    dropdownMenu.classList.toggle('show', !isShown);
-                });
-            });
-
-            // Close dropdown when clicking outside
-            document.addEventListener('click', (e) => {
-                if (!e.target.closest('.dropdown')) {
-                    document.querySelectorAll('.dropdown-menu.show').forEach(menu => {
-                        menu.classList.remove('show');
-                    });
-                }
-            });
-
             // Lazy loading for articles
             const articles = document.querySelectorAll('.post-article');
             const images = document.querySelectorAll('.post-image');
@@ -379,7 +410,7 @@
                     }
                 });
             }, {
-                rootMargin: '0px 0px -50px 0px', // Trigger when 50px from the bottom
+                rootMargin: '0px 0px -50px 0px',
                 threshold: 0.1
             });
 
@@ -389,6 +420,109 @@
             if (endOfPosts && endOfPostsLine) {
                 endObserver.observe(endOfPosts);
             }
+
+            // Like button with floating heart animation using event delegation
+            let isProcessing = false; // Prevent multiple rapid clicks
+
+            document.addEventListener('submit', async function(event) {
+                const form = event.target.closest('.like-form');
+                if (!form || isProcessing) return; // Skip if not a like form or processing
+                event.preventDefault();
+                isProcessing = true;
+
+                const button = form.querySelector('button');
+                const likeIcon = button.querySelector('.like-icon');
+                const likeCount = form.querySelector('.like-count');
+                const url = form.getAttribute('action');
+                const token = form.querySelector('input[name="_token"]').value;
+
+                let count = parseInt(likeCount.textContent);
+                const isLiked = likeIcon.classList.contains('fa-solid');
+
+                // Optimistic UI update
+                if (isLiked) {
+                    likeIcon.classList.remove('fa-solid', 'text-red-500');
+                    likeIcon.classList.add('fa-regular', 'text-gray-500');
+                    likeCount.textContent = count - 1;
+                } else {
+                    likeIcon.classList.remove('fa-regular', 'text-gray-500');
+                    likeIcon.classList.add('fa-solid', 'text-red-500');
+                    likeCount.textContent = count + 1;
+
+                    // Create floating heart animation
+                    const heart = document.createElement('span');
+                    heart.innerHTML = '<i class="fa-solid fa-heart"></i>';
+                    heart.classList.add('floating-heart');
+                    const rect = button.getBoundingClientRect();
+                    heart.style.left = rect.width / 2 + 'px';
+                    heart.style.top = '-10px';
+                    button.style.position = 'relative';
+                    button.appendChild(heart);
+                    setTimeout(() => heart.remove(), 1000);
+                }
+
+                try {
+                    const response = await fetch(url, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': token,
+                            'Accept': 'application/json'
+                        },
+                        body: JSON.stringify({})
+                    });
+
+                    const data = await response.json();
+
+                    if (!response.ok || !data.success) {
+                        throw new Error(data.error || 'Lỗi không xác định');
+                    }
+
+                    // Sync with server
+                    likeCount.textContent = data.likes_count;
+                } catch (error) {
+                    console.error('Lỗi fetch:', error);
+                    alert('Có lỗi xảy ra, vui lòng thử lại.');
+
+                    // Rollback UI on error
+                    if (isLiked) {
+                        likeIcon.classList.remove('fa-regular', 'text-gray-500');
+                        likeIcon.classList.add('fa-solid', 'text-red-500');
+                        likeCount.textContent = count;
+                    } else {
+                        likeIcon.classList.remove('fa-solid', 'text-red-500');
+                        likeIcon.classList.add('fa-regular', 'text-gray-500');
+                        likeCount.textContent = count;
+                    }
+                } finally {
+                    isProcessing = false; // Reset processing flag
+                }
+            });
+
+            // Dropdown toggle handler
+            document.querySelectorAll('.dropdown-toggle').forEach(button => {
+                button.addEventListener('click', () => {
+                    const postId = button.getAttribute('data-post-id');
+                    const dropdownMenu = document.getElementById(`dropdown-menu-${postId}`);
+                    dropdownMenu.classList.toggle('show');
+
+                    // Close other open dropdowns
+                    document.querySelectorAll('.dropdown-menu.show').forEach(menu => {
+                        if (menu.id !== `dropdown-menu-${postId}`) {
+                            menu.classList.remove('show');
+                        }
+                    });
+                });
+            });
+
+            // Close dropdown when clicking outside
+            document.addEventListener('click', (e) => {
+                if (!e.target.closest('.dropdown')) {
+                    document.querySelectorAll('.dropdown-menu.show').forEach(menu => {
+                        menu.classList.remove('show');
+                    });
+                }
+            });
         });
     </script>
 @endsection

@@ -9,6 +9,8 @@ use App\Http\Controllers\User\PostController;
 use App\Http\Controllers\User\UserController;
 use App\Http\Controllers\CommentController;
 use App\Http\Controllers\Admin\AdminController;
+use App\Http\Controllers\FollowController;
+use App\Http\Controllers\NotificationController;
 
 // Route gốc trả về trang login
 Route::get('/', function () {
@@ -77,4 +79,11 @@ Route::prefix('{user:mention}/{post:slug}')->group(function () {
     // Comment
     Route::post('/comments', [CommentController::class, 'store'])->name('comments.store')->middleware('auth.custom');
     Route::delete('/comments/{comment}', [CommentController::class, 'destroy'])->name('comments.destroy')->middleware('auth.custom');
+});
+
+Route::middleware(['auth'])->group(function () {
+    Route::post('/follow/{user}', [FollowController::class, 'follow'])->name('follow');
+    Route::post('/unfollow/{user}', [FollowController::class, 'unfollow'])->name('unfollow');
+    Route::post('/notifications/{id}/mark-as-read', [NotificationController::class, 'markAsRead'])->name('notifications.markAsRead');
+    Route::post('/notifications/mark-all-as-read', [NotificationController::class, 'markAllAsRead'])->name('notifications.markAllAsRead');
 });

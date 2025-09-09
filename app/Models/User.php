@@ -39,7 +39,6 @@ class User extends Authenticatable
 
     protected static function booted()
     {
-        // Tự sinh mention khi tạo user mới
         static::creating(function ($user) {
             if (empty($user->mention)) {
                 $user->mention = self::generateUniqueMention($user->name);
@@ -57,19 +56,20 @@ class User extends Authenticatable
         return $this->id === $post->user_id;
     }
 
-    // public static function generateUniqueMention($name): string
-    // {
-    //     $base = Str::slug($name, '');
-    //     $mention = $base;
-    //     $counter = 1;
+    public function follows()
+    {
+        return $this->belongsToMany(User::class, 'follows', 'follower_id', 'followed_id')->withTimestamps();
+    }
 
-    //     while (self::where('mention', $mention)->exists()) {
-    //         $mention = $base . $counter;
-    //         $counter++;
-    //     }
+    public function followers()
+    {
+        return $this->belongsToMany(User::class, 'follows', 'followed_id', 'follower_id')->withTimestamps();
+    }
 
-    //     return $mention;
-    // }
+    public function isFollowing(User $user)
+    {
+        return $this->follows()->where('followed_id', $user->id)->exists();
+    }
 
     public function getRouteKeyName()
     {
@@ -82,6 +82,7 @@ class User extends Authenticatable
             ? asset('storage/' . $this->avatar)
             : asset('images/default-avatar.png');
     }
+
     public function likes()
     {
         return $this->belongsToMany(Post::class, 'likes', 'user_id', 'post_id')->withTimestamps();
