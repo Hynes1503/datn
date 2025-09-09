@@ -48,6 +48,19 @@ Route::middleware('auth.custom')->group(function () {
     Route::post('/posts', [PostController::class, 'store'])->name('posts.store');
 });
 
+// ================= USERS =================
+Route::prefix('{user:mention}')->group(function () {
+    Route::get('/', [UserController::class, 'show'])->name('users.show');
+
+    // Chỉ owner mới được sửa, xoá
+    Route::middleware(['auth.custom', 'auth.owner'])->group(function () {
+        Route::get('/edit', [UserController::class, 'edit'])->name('users.edit');
+        Route::put('/', [UserController::class, 'update'])->name('users.update');
+        Route::delete('/', [UserController::class, 'destroy'])->name('users.destroy');
+    });
+});
+
+// ================= POSTS WITH USER =================
 Route::prefix('{user:mention}/{post:slug}')->group(function () {
     Route::get('/', [PostController::class, 'show'])->name('posts.show');
 
@@ -64,16 +77,4 @@ Route::prefix('{user:mention}/{post:slug}')->group(function () {
     // Comment
     Route::post('/comments', [CommentController::class, 'store'])->name('comments.store')->middleware('auth.custom');
     Route::delete('/comments/{comment}', [CommentController::class, 'destroy'])->name('comments.destroy')->middleware('auth.custom');
-});
-
-// ================= USERS =================
-Route::prefix('{user:mention}')->group(function () {
-    Route::get('/', [UserController::class, 'show'])->name('users.show');
-
-    // Chỉ owner mới được sửa, xoá
-    Route::middleware(['auth.custom', 'auth.owner'])->group(function () {
-        Route::get('/edit', [UserController::class, 'edit'])->name('users.edit');
-        Route::put('/', [UserController::class, 'update'])->name('users.update');
-        Route::delete('/', [UserController::class, 'destroy'])->name('users.destroy');
-    });
 });
