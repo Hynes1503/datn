@@ -76,12 +76,12 @@
         }
 
         .dropdown-toggle {
-            padding: 12px;
+            padding: 6px;
             border: 1px solid #e5e7eb;
             border-radius: 9999px;
             color: #4b5563;
             transition: background-color 0.2s;
-            font-size: 1.25rem;
+            font-size: 0.75rem;
         }
 
         .dropdown-toggle:hover {
@@ -139,6 +139,16 @@
         .like-button i.fa-solid {
             color: #e02424;
         }
+
+        /* Ensure active hashtag doesn't change on hover */
+        .bg-black:hover {
+            background-color: #000 !important;
+        }
+
+        /* Ensure visibility toggle works */
+        .hidden {
+            display: none;
+        }
     </style>
 
     <article class="post-article mb-6" data-id="{{ $post->id }}">
@@ -180,16 +190,54 @@
                         </div>
                     @endif
                 </div>
-
                 {{-- Content --}}
                 <p class="mt-3 text-sm text-gray-800">{!! nl2br(e($post->content)) !!}</p>
 
                 {{-- Hashtags --}}
                 @if ($post->hashtag)
                     <div class="mt-3 flex flex-wrap gap-2">
-                        @foreach (explode(',', $post->hashtag) as $tag)
-                            <span
-                                class="text-xs px-2 py-1 bg-gray-100 rounded-full text-gray-600">{{ trim($tag) }}</span>
+                        @php
+                            // Lấy danh sách hashtag từ bài viết, loại bỏ ký tự # và chuẩn hóa
+                            $tags = array_map('trim', explode(',', str_replace('#', '', $post->hashtag)));
+                            // Lấy danh sách hashtag hiện tại từ URL (nếu có)
+                            $currentHashtags = request()->route('hashtag')
+                                ? array_map('trim', explode(',', request()->route('hashtag')))
+                                : [];
+                            $currentHashtags = array_unique(array_map('strtolower', $currentHashtags));
+                            // Tách hashtag thành hai nhóm: đang chọn và không chọn
+                            $selectedTags = [];
+                            $otherTags = [];
+                            foreach ($tags as $tag) {
+                                if (in_array(strtolower($tag), $currentHashtags)) {
+                                    $selectedTags[] = $tag;
+                                } else {
+                                    $otherTags[] = $tag;
+                                }
+                            }
+                            // Kết hợp danh sách: hashtag đang chọn trước, sau đó đến hashtag không chọn
+                            $sortedTags = array_merge($selectedTags, $otherTags);
+                        @endphp
+                        @foreach ($sortedTags as $tag)
+                            @php
+                                // Kiểm tra xem hashtag có trong danh sách hiện tại không
+                                $isCurrentTag = in_array(strtolower($tag), $currentHashtags);
+                                // Tạo danh sách hashtag mới
+                                if ($isCurrentTag) {
+                                    // Loại bỏ hashtag được nhấp khỏi danh sách
+                                    $newHashtagList = implode(',', array_diff($currentHashtags, [strtolower($tag)]));
+                                } else {
+                                    // Thêm hashtag mới vào danh sách
+                                    $newHashtagList = $currentHashtags
+                                        ? implode(',', $currentHashtags) . ',' . $tag
+                                        : $tag;
+                                }
+                                // Nếu danh sách rỗng, chuyển về trang mặc định
+                                $newHashtagList = $newHashtagList ?: 'empty';
+                            @endphp
+                            <a href="{{ route('posts.byHashtag', $newHashtagList) }}"
+                                class="text-xs px-2 py-1 rounded-full {{ $isCurrentTag ? 'bg-black text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200' }}">
+                                #{{ $tag }}
+                            </a>
                         @endforeach
                     </div>
                 @endif
@@ -244,7 +292,7 @@
                         <p class="text-sm text-gray-600">Bài viết được thích bởi {{ $post->likes()->count() }} người.</p>
                     </div>
                 @endif
-
+                <hr class="mt-5 border-t-2 border-gray-450">
                 {{-- Comment Section --}}
                 <div class="mt-6">
                     <h3 class="text-lg font-semibold text-gray-700">Bình luận</h3>
@@ -260,8 +308,10 @@
                                 <div class="flex-1">
                                     <textarea name="content" rows="3" class="w-full border rounded-lg p-2 text-sm" placeholder="Viết bình luận..."
                                         required></textarea>
-                                    <button type="submit"
-                                        class="mt-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">Gửi</button>
+                                    <button
+                                        class="mt-2 px-3 py-1 text-sm border border-black rounded-lg bg-transparent text-black hover:bg-black hover:text-white transition">
+                                        Gửi
+                                    </button>
                                 </div>
                             </div>
                             <p class="text-red-500 text-sm mt-1 error-message hidden"></p>
@@ -280,7 +330,7 @@
                                 <img src="{{ $comment->user->getAvatarUrlAttribute() }}" alt="{{ $comment->user->name }}"
                                     class="h-10 w-10 rounded-full object-cover">
                                 <div class="flex-1">
-                                    <div class="bg-gray-100 rounded-lg p-3">
+                                    <div class="bg-gray-100 rounded-lg p-3 comment-content">
                                         <div class="flex items-center justify-between">
                                             <div>
                                                 <a href="{{ route('users.show', $comment->user->mention) }}"
@@ -289,30 +339,74 @@
                                                     class="text-xs text-gray-500">{{ $comment->created_at->diffForHumans() }}</span>
                                             </div>
                                             @if (auth()->check() && (auth()->id() === $comment->user_id || auth()->user()->ownsPost($post)))
-                                                <form
-                                                    action="{{ route('comments.destroy', ['user' => $post->user->mention, 'post' => $post->slug, 'comment' => $comment->id]) }}"
-                                                    method="POST" class="inline comment-delete-form">
-                                                    @csrf
-                                                    @method('DELETE')
-                                                    <button type="submit"
-                                                        class="text-red-600 hover:text-red-800 text-sm">Xóa</button>
-                                                </form>
+                                                <div class="dropdown">
+                                                    <button class="dropdown-toggle" type="button"
+                                                        data-comment-id="{{ $comment->id }}">
+                                                        <i class="fa-solid fa-ellipsis-vertical"></i>
+                                                    </button>
+                                                    <div class="dropdown-menu text-sm space-y-1"
+                                                        id="dropdown-menu-comment-{{ $comment->id }}">
+                                                        <button type="button"
+                                                            class="edit-comment-btn px-2 py-1 rounded hover:bg-gray-100 w-full text-left"
+                                                            data-comment-id="{{ $comment->id }}">
+                                                            Sửa
+                                                        </button>
+                                                        <form
+                                                            action="{{ route('comments.destroy', ['user' => $post->user->mention, 'post' => $post->slug, 'comment' => $comment->id]) }}"
+                                                            method="POST" class="inline comment-delete-form w-full">
+                                                            @csrf
+                                                            @method('DELETE')
+                                                            <button type="submit"
+                                                                class="px-2 py-1 rounded text-red-500 hover:bg-red-50 w-full text-left"
+                                                                onclick="return confirm('Bạn có chắc chắn muốn xóa bình luận này?');">
+                                                                Xóa
+                                                            </button>
+                                                        </form>
+                                                    </div>
+                                                </div>
                                             @endif
                                         </div>
-                                        <p class="text-sm text-gray-800 mt-1">{!! nl2br(e($comment->content)) !!}</p>
+                                        <p class="text-sm text-gray-800 mt-1 comment-text">{!! nl2br(e($comment->content)) !!}</p>
                                     </div>
+                                    <!-- Edit Comment Form (hidden by default) -->
+                                    <form
+                                        action="{{ route('comments.update', ['user' => $post->user->mention, 'post' => $post->slug, 'comment' => $comment->id]) }}"
+                                        method="POST" class="mt-2 edit-comment-form hidden"
+                                        data-comment-id="{{ $comment->id }}">
+                                        @csrf
+                                        @method('PUT')
+                                        <div class="flex items-start gap-2">
+                                            <img src="{{ auth()->user()->getAvatarUrlAttribute() }}"
+                                                alt="{{ auth()->user()->name }}"
+                                                class="h-10 w-10 rounded-full object-cover">
+                                            <div class="flex-1">
+                                                <textarea name="content" rows="3" class="w-full border rounded-lg p-2 text-sm" required>{{ $comment->content }}</textarea>
+                                                <div class="flex gap-2">
+                                                    <button type="submit"
+                                                        class="mt-2 px-3 py-1 text-sm border border-black rounded-lg bg-transparent text-black hover:bg-black hover:text-white transition">
+                                                        Cập nhật
+                                                    </button>
+                                                    <button type="button"
+                                                        class="mt-2 px-3 py-1 text-sm border border-gray-300 rounded-lg bg-transparent text-gray-600 hover:bg-gray-200 cancel-edit-btn">
+                                                        Hủy
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <p class="text-red-500 text-sm mt-1 error-message hidden"></p>
+                                    </form>
 
                                     {{-- Replies --}}
                                     @if ($comment->replies->count())
                                         <div class="ml-6 mt-2 space-y-4 replies-list">
                                             @foreach ($comment->replies as $reply)
-                                                <div class="flex items-start gap-2 reply border-t border-gray-100 pt-2"
-                                                    data-reply-id="{{ $reply->id }}">
+                                                <div class="flex items-start gap-2 reply pt-2"
+                                                    data-comment-id="{{ $reply->id }}">
                                                     <img src="{{ $reply->user->getAvatarUrlAttribute() }}"
                                                         alt="{{ $reply->user->name }}"
                                                         class="h-8 w-8 rounded-full object-cover">
                                                     <div class="flex-1">
-                                                        <div class="bg-gray-50 rounded-lg p-2">
+                                                        <div class="bg-gray-100 rounded-lg p-2 comment-content">
                                                             <div class="flex items-center justify-between">
                                                                 <div>
                                                                     <a href="{{ route('users.show', $reply->user->mention) }}"
@@ -321,19 +415,60 @@
                                                                         class="text-xs text-gray-500">{{ $reply->created_at->diffForHumans() }}</span>
                                                                 </div>
                                                                 @if (auth()->check() && (auth()->id() === $reply->user_id || auth()->user()->ownsPost($post)))
-                                                                    <form
-                                                                        action="{{ route('comments.destroy', ['user' => $post->user->mention, 'post' => $post->slug, 'comment' => $reply->id]) }}"
-                                                                        method="POST" class="inline comment-delete-form">
-                                                                        @csrf
-                                                                        @method('DELETE')
-                                                                        <button type="submit"
-                                                                            class="text-red-600 hover:text-red-800 text-xs">Xóa</button>
-                                                                    </form>
+                                                                    <div class="dropdown">
+                                                                        <button class="dropdown-toggle" type="button"
+                                                                            data-comment-id="{{ $reply->id }}">
+                                                                            <i class="fa-solid fa-ellipsis-vertical"></i>
+                                                                        </button>
+                                                                        <div class="dropdown-menu"
+                                                                            id="dropdown-menu-comment-{{ $reply->id }}">
+                                                                            <button type="button"
+                                                                                class="edit-comment-btn"
+                                                                                data-comment-id="{{ $reply->id }}">Sửa</button>
+                                                                            <form
+                                                                                action="{{ route('comments.destroy', ['user' => $post->user->mention, 'post' => $post->slug, 'comment' => $reply->id]) }}"
+                                                                                method="POST"
+                                                                                class="inline comment-delete-form">
+                                                                                @csrf
+                                                                                @method('DELETE')
+                                                                                <button type="submit"
+                                                                                    class="text-red-500"
+                                                                                    onclick="return confirm('Bạn có chắc chắn muốn xóa phản hồi này?');">Xóa</button>
+                                                                            </form>
+                                                                        </div>
+                                                                    </div>
                                                                 @endif
                                                             </div>
-                                                            <p class="text-xs text-gray-800 mt-1">{!! nl2br(e($reply->content)) !!}
-                                                            </p>
+                                                            <p class="text-xs text-gray-800 mt-1 comment-text">
+                                                                {!! nl2br(e($reply->content)) !!}</p>
                                                         </div>
+                                                        <!-- Edit Reply Form (hidden by default) -->
+                                                        <form
+                                                            action="{{ route('comments.update', ['user' => $post->user->mention, 'post' => $post->slug, 'comment' => $reply->id]) }}"
+                                                            method="POST" class="mt-2 edit-comment-form hidden"
+                                                            data-comment-id="{{ $reply->id }}">
+                                                            @csrf
+                                                            @method('PUT')
+                                                            <div class="flex items-start gap-2">
+                                                                <img src="{{ auth()->user()->getAvatarUrlAttribute() }}"
+                                                                    alt="{{ auth()->user()->name }}"
+                                                                    class="h-8 w-8 rounded-full object-cover">
+                                                                <div class="flex-1">
+                                                                    <textarea name="content" rows="2" class="w-full border rounded-lg p-2 text-xs" required>{{ $reply->content }}</textarea>
+                                                                    <div class="flex gap-2">
+                                                                        <button type="submit"
+                                                                            class="mt-1 px-3 py-1 text-xs border border-black rounded-lg bg-transparent text-black hover:bg-black hover:text-white transition">
+                                                                            Cập nhật
+                                                                        </button>
+                                                                        <button type="button"
+                                                                            class="mt-1 px-3 py-1 text-xs border border-gray-300 rounded-lg bg-transparent text-gray-600 hover:bg-gray-200 cancel-edit-btn">
+                                                                            Hủy
+                                                                        </button>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                            <p class="text-red-500 text-xs mt-1 error-message hidden"></p>
+                                                        </form>
                                                     </div>
                                                 </div>
                                             @endforeach
@@ -353,10 +488,11 @@
                                                     class="h-8 w-8 rounded-full object-cover">
                                                 <div class="flex-1">
                                                     <textarea name="content" rows="2" class="w-full border rounded-lg p-2 text-xs"
-                                                        placeholder="Trả lời {{ $comment->user->name }}..." required></textarea>
+                                                        placeholder="Phản hồi {{ $comment->user->name }}..." required></textarea>
                                                     <button type="submit"
-                                                        class="mt-1 bg-blue-600 text-white px-3 py-1 rounded-lg hover:bg-blue-700 text-xs">Trả
-                                                        lời</button>
+                                                        class="mt-1 px-3 py-1 text-xs border border-black text-black rounded-lg bg-transparent hover:bg-black hover:text-white transition">
+                                                        Phản hồi
+                                                    </button>
                                                 </div>
                                             </div>
                                             <p class="text-red-500 text-xs mt-1 error-message hidden"></p>
@@ -444,7 +580,7 @@
                         const data = await response.json();
                         if (data.success) {
                             likeCountSpan.textContent = data
-                            .likes; // Update with server-confirmed count
+                                .likes; // Update with server-confirmed count
                             icon.classList.toggle('fa-solid', data.is_liked);
                             icon.classList.toggle('fa-regular', !data.is_liked);
                             icon.classList.toggle('text-red-600', data.is_liked);
@@ -472,12 +608,16 @@
             document.querySelectorAll('.dropdown-toggle').forEach(button => {
                 button.addEventListener('click', () => {
                     const postId = button.getAttribute('data-post-id');
-                    const dropdownMenu = document.getElementById(`dropdown-menu-${postId}`);
+                    const commentId = button.getAttribute('data-comment-id');
+                    const dropdownMenu = postId ?
+                        document.getElementById(`dropdown-menu-${postId}`) :
+                        document.getElementById(`dropdown-menu-comment-${commentId}`);
                     dropdownMenu.classList.toggle('show');
 
                     // Close other open dropdowns
                     document.querySelectorAll('.dropdown-menu.show').forEach(menu => {
-                        if (menu.id !== `dropdown-menu-${postId}`) {
+                        if (menu.id !== `dropdown-menu-${postId}` && menu.id !==
+                            `dropdown-menu-comment-${commentId}`) {
                             menu.classList.remove('show');
                         }
                     });
@@ -520,30 +660,64 @@
 
                             const isReply = !!repliesList;
                             const newCommentHtml = `
-                                <div class="flex items-start gap-3 ${isReply ? 'reply border-t border-gray-100 pt-2' : 'comment border-t border-gray-200 pt-4'}" data-${isReply ? 'reply' : 'comment'}-id="${comment.id}">
+                                <div class="flex items-start gap-3 ${isReply ? 'reply border-t border-gray-100 pt-2' : 'comment border-t border-gray-200 pt-4'}" data-comment-id="${comment.id}">
                                     <img src="${comment.user.avatar_url || '{{ asset('images/default-avatar.png') }}'}"
-                                        alt="${comment.user.name}"
-                                        class="h-${isReply ? '8' : '10'} w-${isReply ? '8' : '10'} rounded-full object-cover"
-                                        onerror="this.onerror=null;this.src='{{ asset('images/default-avatar.png') }}';">
+                                         alt="${comment.user.name}"
+                                         class="h-${isReply ? '8' : '10'} w-${isReply ? '8' : '10'} rounded-full object-cover"
+                                         onerror="this.onerror=null;this.src='{{ asset('images/default-avatar.png') }}';">
                                     <div class="flex-1">
-                                        <div class="bg-${isReply ? 'gray-50' : 'gray-100'} rounded-lg p-${isReply ? '2' : '3'}">
+                                        <div class="bg-${isReply ? 'gray-50' : 'gray-100'} rounded-lg p-${isReply ? '2' : '3'} comment-content">
                                             <div class="flex items-center justify-between">
                                                 <div>
                                                     <a href="/@${comment.user.mention}"
-                                                        class="text-${isReply ? 'xs' : 'sm'} font-semibold text-gray-700">${comment.user.name}</a>
+                                                       class="text-${isReply ? 'xs' : 'sm'} font-semibold text-gray-700">${comment.user.name}</a>
                                                     <span class="text-xs text-gray-500">vừa xong</span>
                                                 </div>
                                                 ${comment.can_delete ? `
-                                                        <form action="/@${comment.user.mention}/posts/${comment.post_id}/comments/${comment.id}"
-                                                            method="POST" class="inline comment-delete-form">
-                                                            <input type="hidden" name="_token" value="{{ csrf_token() }}">
-                                                            <input type="hidden" name="_method" value="DELETE">
-                                                            <button type="submit" class="text-red-600 hover:text-red-800 text-${isReply ? 'xs' : 'sm'}">Xóa</button>
-                                                        </form>
-                                                    ` : ''}
+                                                            <div class="dropdown">
+                                                                <button class="dropdown-toggle" type="button" data-comment-id="${comment.id}">
+                                                                    <i class="fa-solid fa-ellipsis-vertical"></i>
+                                                                </button>
+                                                                <div class="dropdown-menu" id="dropdown-menu-comment-${comment.id}">
+                                                                    <button type="button" class="edit-comment-btn" data-comment-id="${comment.id}">Sửa</button>
+                                                                    <form action="/@${comment.user.mention}/posts/${comment.post_id}/comments/${comment.id}"
+                                                                          method="POST" class="inline comment-delete-form">
+                                                                        <input type="hidden" name="_token" value="{{ csrf_token() }}">
+                                                                        <input type="hidden" name="_method" value="DELETE">
+                                                                        <button type="submit" class="text-red-500"
+                                                                                onclick="return confirm('Bạn có chắc chắn muốn xóa ${isReply ? 'phản hồi' : 'bình luận'} này?');">Xóa</button>
+                                                                    </form>
+                                                                </div>
+                                                            </div>
+                                                        ` : ''}
                                             </div>
-                                            <p class="text-${isReply ? 'xs' : 'sm'} text-gray-800 mt-1">${comment.content.replace(/\n/g, '<br>')}</p>
+                                            <p class="text-${isReply ? 'xs' : 'sm'} text-gray-800 mt-1 comment-text">${comment.content.replace(/\n/g, '<br>')}</p>
                                         </div>
+                                        <form action="/@${comment.user.mention}/posts/${comment.post_id}/comments/${comment.id}"
+                                              method="POST" class="mt-2 edit-comment-form hidden" data-comment-id="${comment.id}">
+                                            <input type="hidden" name="_token" value="{{ csrf_token() }}">
+                                            <input type="hidden" name="_method" value="PUT">
+                                            <div class="flex items-start gap-2">
+                                                <img src="${comment.user.avatar_url || '{{ asset('images/default-avatar.png') }}'}"
+                                                     alt="${comment.user.name}"
+                                                     class="h-${isReply ? '8' : '10'} w-${isReply ? '8' : '10'} rounded-full object-cover">
+                                                <div class="flex-1">
+                                                    <textarea name="content" rows="${isReply ? '2' : '3'}" class="w-full border rounded-lg p-2 text-${isReply ? 'xs' : 'sm'}"
+                                                              required>${comment.content}</textarea>
+                                                    <div class="flex gap-2">
+                                                        <button type="submit"
+                                                                class="mt-${isReply ? '1' : '2'} px-3 py-1 text-${isReply ? 'xs' : 'sm'} border border-black rounded-lg bg-transparent text-black hover:bg-black hover:text-white transition">
+                                                            Cập nhật
+                                                        </button>
+                                                        <button type="button"
+                                                                class="mt-${isReply ? '1' : '2'} px-3 py-1 text-${isReply ? 'xs' : 'sm'} border border-gray-300 rounded-lg bg-transparent text-gray-600 hover:bg-gray-200 cancel-edit-btn">
+                                                            Hủy
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <p class="text-red-500 text-${isReply ? 'xs' : 'sm'} mt-1 error-message hidden"></p>
+                                        </form>
                                     </div>
                                 </div>
                             `;
@@ -607,6 +781,100 @@
                         console.error('Error deleting comment:', error);
                     }
                 }
+            });
+
+            // Handle edit comment button
+            document.querySelectorAll('.edit-comment-btn').forEach(button => {
+                button.addEventListener('click', () => {
+                    const commentId = button.getAttribute('data-comment-id');
+                    const commentElement = document.querySelector(
+                        `[data-comment-id="${commentId}"]`);
+                    const commentContent = commentElement.querySelector('.comment-content');
+                    const editForm = commentElement.querySelector('.edit-comment-form');
+                    const dropdownMenu = document.getElementById(
+                        `dropdown-menu-comment-${commentId}`);
+
+                    if (commentContent && editForm && dropdownMenu) {
+                        // Hide dropdown
+                        dropdownMenu.classList.remove('show');
+                        // Hide comment content and show edit form
+                        commentContent.classList.add('hidden');
+                        editForm.classList.remove('hidden');
+                    } else {
+                        console.error(
+                            'Could not find comment content, edit form, or dropdown for comment ID:',
+                            commentId);
+                    }
+                });
+            });
+
+            // Handle cancel edit button
+            document.querySelectorAll('.cancel-edit-btn').forEach(button => {
+                button.addEventListener('click', () => {
+                    const editForm = button.closest('.edit-comment-form');
+                    const commentElement = editForm.closest('.comment, .reply');
+                    const commentContent = commentElement.querySelector('.comment-content');
+
+                    if (commentContent && editForm) {
+                        // Hide edit form and show comment content
+                        editForm.classList.add('hidden');
+                        commentContent.classList.remove('hidden');
+                    } else {
+                        console.error(
+                            'Could not find comment content or edit form for cancel action');
+                    }
+                });
+            });
+
+            // Handle edit comment form submission via AJAX
+            document.querySelectorAll('.edit-comment-form').forEach(form => {
+                form.addEventListener('submit', async function(event) {
+                    event.preventDefault();
+                    const formData = new FormData(this);
+                    const commentId = this.getAttribute('data-comment-id');
+                    const commentElement = document.querySelector(
+                        `[data-comment-id="${commentId}"]`);
+                    const commentContent = commentElement.querySelector('.comment-content');
+                    const commentText = commentElement.querySelector('.comment-text');
+                    const errorMessage = this.querySelector('.error-message');
+
+                    if (!commentContent || !commentText || !errorMessage) {
+                        console.error(
+                            'Could not find comment content, text, or error message for comment ID:',
+                            commentId);
+                        return;
+                    }
+
+                    errorMessage.classList.add('hidden');
+
+                    try {
+                        const response = await fetch(this.action, {
+                            method: 'POST', // Laravel handles PUT via _method
+                            body: formData,
+                            headers: {
+                                'Accept': 'application/json',
+                                'X-CSRF-TOKEN': formData.get('_token')
+                            }
+                        });
+
+                        const data = await response.json();
+                        if (data.success) {
+                            // Update the comment text
+                            commentText.innerHTML = data.comment.content.replace(/\n/g, '<br>');
+                            // Hide edit form and show comment content
+                            this.classList.add('hidden');
+                            commentContent.classList.remove('hidden');
+                        } else {
+                            errorMessage.textContent = data.error ||
+                                'Có lỗi xảy ra khi sửa bình luận.';
+                            errorMessage.classList.remove('hidden');
+                        }
+                    } catch (error) {
+                        console.error('Error updating comment:', error);
+                        errorMessage.textContent = 'Có lỗi xảy ra khi sửa bình luận.';
+                        errorMessage.classList.remove('hidden');
+                    }
+                });
             });
         });
     </script>

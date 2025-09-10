@@ -82,12 +82,12 @@
         }
 
         .dropdown-toggle {
-            padding: 12px;
+            padding: 6px;
             border: 1px solid #e5e7eb;
             border-radius: 9999px;
             color: #4b5563;
             transition: background-color 0.2s;
-            font-size: 1.25rem;
+            font-size: 0.75rem;
         }
 
         .dropdown-toggle:hover {
@@ -184,6 +184,11 @@
                 opacity: 0;
                 transform: translateY(-60px) scale(0.8);
             }
+        }
+
+        /* Ensure active hashtag doesn't change on hover */
+        .bg-black:hover {
+            background-color: #000 !important;
         }
     </style>
 
@@ -290,9 +295,44 @@
 
                         @if (!empty($post->hashtag))
                             <div class="mt-3 flex flex-wrap gap-2">
-                                @foreach (explode(',', $post->hashtag) as $tag)
-                                    <span
-                                        class="text-xs px-2 py-1 bg-gray-100 rounded-full text-gray-600">{{ trim($tag) }}</span>
+                                @php
+                                    // Lấy danh sách hashtag từ bài viết, loại bỏ ký tự # và chuẩn hóa
+                                    $tags = array_map('trim', explode(',', str_replace('#', '', $post->hashtag)));
+                                    // Lấy danh sách hashtag hiện tại từ URL (nếu có)
+                                    $currentHashtags = request()->route('hashtag') ? array_map('trim', explode(',', request()->route('hashtag'))) : [];
+                                    $currentHashtags = array_unique(array_map('strtolower', $currentHashtags));
+                                    // Tách hashtag thành hai nhóm: đang chọn và không chọn
+                                    $selectedTags = [];
+                                    $otherTags = [];
+                                    foreach ($tags as $tag) {
+                                        if (in_array(strtolower($tag), $currentHashtags)) {
+                                            $selectedTags[] = $tag;
+                                        } else {
+                                            $otherTags[] = $tag;
+                                        }
+                                    }
+                                    // Kết hợp danh sách: hashtag đang chọn trước, sau đó đến hashtag không chọn
+                                    $sortedTags = array_merge($selectedTags, $otherTags);
+                                @endphp
+                                @foreach ($sortedTags as $tag)
+                                    @php
+                                        // Kiểm tra xem hashtag có trong danh sách hiện tại không
+                                        $isCurrentTag = in_array(strtolower($tag), $currentHashtags);
+                                        // Tạo danh sách hashtag mới
+                                        if ($isCurrentTag) {
+                                            // Loại bỏ hashtag được nhấp khỏi danh sách
+                                            $newHashtagList = implode(',', array_diff($currentHashtags, [strtolower($tag)]));
+                                        } else {
+                                            // Thêm hashtag mới vào danh sách
+                                            $newHashtagList = $currentHashtags ? implode(',', $currentHashtags) . ',' . $tag : $tag;
+                                        }
+                                        // Nếu danh sách rỗng, chuyển về trang mặc định
+                                        $newHashtagList = $newHashtagList ?: 'empty';
+                                    @endphp
+                                    <a href="{{ route('posts.byHashtag', $newHashtagList) }}"
+                                       class="text-xs px-2 py-1 rounded-full {{ $isCurrentTag ? 'bg-black text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200' }}">
+                                        #{{ $tag }}
+                                    </a>
                                 @endforeach
                             </div>
                         @endif
@@ -329,7 +369,7 @@
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                         d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8s-9-3.582-9-8 4.03-8 9-8 9 3.582 9 8z" />
                                 </svg>
-                                <span>{{ $post->shares ?? 0 }}</span>
+                                <span>{{ $post->allcomments()->count() ?? 0 }}</span>
                             </div>
                             <div class="ml-auto text-gray-400">{{ $post->views ?? 0 }} lượt xem</div>
                         </div>

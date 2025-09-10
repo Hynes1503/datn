@@ -76,4 +76,25 @@ class CommentController extends Controller
             'message' => 'Bình luận đã được xóa.',
         ]);
     }
+
+    public function update(Request $request, $user, Post $post, Comment $comment)
+    {
+        // Ensure the user is authorized to update the comment
+        if (Auth::id() !== $comment->user_id && !Auth::user()->ownsPost($post)) {
+            return response()->json(['error' => 'Bạn không có quyền sửa bình luận này.'], 403);
+        }
+
+        $request->validate([
+            'content' => 'required|string|max:1000',
+        ]);
+
+        $comment->update([
+            'content' => $request->input('content'),
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'comment' => $comment->fresh(), // Get the updated comment
+        ]);
+    }
 }

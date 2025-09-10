@@ -189,7 +189,7 @@
 
         closeModalBtn.addEventListener('click', () => {
             modal.classList.add('hidden');
-            mediaPreview.innerHTML = ''; // Clear preview when closing
+            mediaPreview.innerHTML = '';
         });
 
         modal.addEventListener('click', (e) => {

@@ -47,6 +47,10 @@ class Post extends Model
     {
         return $this->hasMany(Comment::class)->whereNull('parent_id')->orderBy('created_at', 'desc');
     }
+    public function allcomments()
+    {
+        return $this->hasMany(Comment::class);
+    }
     public function likes()
     {
         return $this->belongsToMany(User::class, 'likes', 'post_id', 'user_id')->withTimestamps();

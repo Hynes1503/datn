@@ -11,6 +11,7 @@ use App\Http\Controllers\CommentController;
 use App\Http\Controllers\Admin\AdminController;
 use App\Http\Controllers\FollowController;
 use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\SearchController;
 
 // Route gốc trả về trang login
 Route::get('/', function () {
@@ -42,13 +43,16 @@ Route::get(
 Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
 Route::post('/login', [LoginController::class, 'login']);
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
-
-// ================= POSTS =================
+Route::get('/hashtag/{hashtag}', [PostController::class, 'byHashtag'])->name('posts.byHashtag'); // ================= POSTS =================
 Route::middleware('auth.custom')->group(function () {
     Route::get('/home', [PostController::class, 'home'])->name('home');
     Route::get('/posts/create', [PostController::class, 'create'])->name('posts.create');
     Route::post('/posts', [PostController::class, 'store'])->name('posts.store');
 });
+
+Route::get('/search', action: [SearchController::class, 'index'])->name('search');
+// routes/web.php
+Route::get('/search/suggestions', [SearchController::class, 'suggestions'])->name('search.suggestions');
 
 // ================= USERS =================
 Route::prefix('{user:mention}')->group(function () {
@@ -79,7 +83,10 @@ Route::prefix('{user:mention}/{post:slug}')->group(function () {
     // Comment
     Route::post('/comments', [CommentController::class, 'store'])->name('comments.store')->middleware('auth.custom');
     Route::delete('/comments/{comment}', [CommentController::class, 'destroy'])->name('comments.destroy')->middleware('auth.custom');
+    Route::put('/comments/{comment}', [CommentController::class, 'update'])->name('comments.update')->middleware('auth.custom');
 });
+
+// routes/web.php
 
 Route::middleware(['auth'])->group(function () {
     Route::post('/follow/{user}', [FollowController::class, 'follow'])->name('follow');

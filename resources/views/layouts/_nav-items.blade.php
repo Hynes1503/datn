@@ -8,10 +8,7 @@
     </a>
 
     <!-- Search -->
-    <a href="#" class="text-gray-900 hover:scale-110 hover:bg-gray-100 p-2 rounded-full transition-all"
-        title="Tìm kiếm">
-        <i class="fa-solid fa-magnifying-glass"></i>
-    </a>
+    @include('layouts._search')
 
     <!-- Create Post -->
     <a href="#"

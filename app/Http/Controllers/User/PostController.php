@@ -58,13 +58,15 @@ class PostController extends Controller
         // Sinh slug ngẫu nhiên
         $slug = $this->generateRandomSlug(12);
 
-        // Tạo post
+        $hashtag = $request->hashtag ? str_replace('#', '', $request->hashtag) : null;
+
         $post = $user->posts()->create([
             'title'   => $request->title,
             'content' => $request->content,
-            'hashtag' => $request->hashtag,
+            'hashtag' => $hashtag,
             'slug'    => $slug,
         ]);
+
 
         if (!$post) {
             Log::error('Post not created', ['user_id' => $user->id, 'request' => $request->all()]);
@@ -165,11 +167,15 @@ class PostController extends Controller
         ]);
 
         // Cập nhật thông tin bài viết
+        // Loại bỏ toàn bộ dấu #
+        $hashtag = $request->hashtag ? str_replace('#', '', $request->hashtag) : null;
+
         $post->update([
             'title'   => $request->title,
             'content' => $request->content,
-            'hashtag' => $request->hashtag,
+            'hashtag' => $hashtag,
         ]);
+
 
         // Xử lý xóa media được chọn
         if ($request->filled('delete_media')) {
@@ -260,5 +266,25 @@ class PostController extends Controller
         }
 
         return back()->with('success', $wasLiked ? 'Đã bỏ thích bài viết.' : 'Đã thích bài viết.');
+    }
+    public function byHashtag($hashtag)
+    {
+        // Tách và chuẩn hóa danh sách hashtag, loại bỏ trùng lặp
+        $tags = array_unique(array_map('trim', explode(',', $hashtag)));
+
+        // Tìm bài post chứa tất cả hashtag
+        $posts = Post::where(function ($query) use ($tags) {
+            foreach ($tags as $tag) {
+                $query->where('hashtag', 'like', '%' . $tag . '%');
+            }
+        })
+            ->with(['user', 'media'])
+            ->orderBy('created_at', 'desc')
+            ->paginate(10);
+
+        return view('user.posts.by_hashtag', [
+            'posts' => $posts,
+            'hashtag' => $hashtag,
+        ]);
     }
 }

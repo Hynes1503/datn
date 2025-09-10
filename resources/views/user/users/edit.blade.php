@@ -19,13 +19,17 @@
         {{-- Avatar --}}
         <div class="mb-4">
             <label class="block text-sm font-medium">Ảnh đại diện</label>
-            <input type="file" name="avatar" class="mt-2">
+            <input type="file" name="avatar" id="avatar" accept="image/*" class="mt-2">
             @error('avatar')
                 <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
             @enderror
-            @if($user->avatar)
-                <img src="{{ asset('storage/' . $user->avatar) }}" alt="Avatar" class="h-16 w-16 rounded-full mt-2 object-cover">
-            @endif
+            <div class="mt-2">
+                @if($user->avatar)
+                    <img id="avatar-preview" src="{{ asset('storage/' . $user->avatar) }}" alt="Avatar" class="h-16 w-16 rounded-full object-cover">
+                @else
+                    <img id="avatar-preview" src="" alt="Avatar Preview" class="h-16 w-16 rounded-full object-cover hidden">
+                @endif
+            </div>
         </div>
 
         {{-- Name --}}
@@ -141,4 +145,28 @@
         </div>
     </form>
 </div>
+
+<script>
+    document.getElementById('avatar').addEventListener('change', function(event) {
+        const file = event.target.files[0];
+        const preview = document.getElementById('avatar-preview');
+        
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                preview.src = e.target.result;
+                preview.classList.remove('hidden');
+            };
+            reader.readAsDataURL(file);
+        } else {
+            // If no file is selected, revert to default or hide preview
+            @if($user->avatar)
+                preview.src = "{{ asset('storage/' . $user->avatar) }}";
+            @else
+                preview.src = "";
+                preview.classList.add('hidden');
+            @endif
+        }
+    });
+</script>
 @endsection

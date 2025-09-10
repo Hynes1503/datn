@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
-@section('title', 'Trang chủ')
-@section('menuTitle', 'Sự kiện mới')
+@section('title', 'Bài viết với hashtag #' . $hashtag)
+@section('menuTitle', 'Bài viết với hashtag #' . $hashtag)
 
 @section('content')
     <style>
@@ -77,12 +77,12 @@
         }
 
         .dropdown-toggle {
-            padding: 6px;
+            padding: 12px;
             border: 1px solid #e5e7eb;
             border-radius: 9999px;
             color: #4b5563;
             transition: background-color 0.2s;
-            font-size: 0.75rem;
+            font-size: 1.25rem;
         }
 
         .dropdown-toggle:hover {
@@ -132,8 +132,7 @@
         .floating-heart {
             position: absolute;
             font-size: 1.2rem;
-            color: #ef4444;
-            /* đỏ-500 */
+            color: #ef4444; /* đỏ-500 */
             animation: floatUp 1s ease-out forwards;
             pointer-events: none;
         }
@@ -143,16 +142,19 @@
                 opacity: 1;
                 transform: translateY(0) scale(1);
             }
-
             50% {
                 opacity: 0.8;
                 transform: translateY(-30px) scale(1.3);
             }
-
             100% {
                 opacity: 0;
                 transform: translateY(-60px) scale(0.8);
             }
+        }
+
+        /* Ensure active hashtag doesn't change on hover */
+        .bg-black:hover {
+            background-color: #000 !important;
         }
     </style>
 
@@ -165,106 +167,151 @@
         </a>
     @endif
 
-    @foreach ($posts as $post)
-        <article class="post-article" data-id="{{ $post->id }}">
-            <div class="flex items-start gap-4">
-                <!-- Avatar -->
-                <div class="flex-shrink-0">
-                    <a href="{{ route('users.show', $post->user->mention) }}">
-                        <img src="{{ asset('storage/' . ($post->user->avatar ?? '')) }}" alt="{{ $post->user->name }}"
-                            class="h-24 w-24 rounded-full object-cover"
-                            onerror="this.onerror=null;this.src='{{ asset('images/default-avatar.png') }}';">
-                    </a>
-                </div>
+    @if ($posts->isEmpty())
+        <p class="text-gray-500 text-center">Không có bài viết nào với hashtag #{{ $hashtag }}.</p>
+    @else
+        @foreach ($posts as $post)
+            <article class="post-article" data-id="{{ $post->id }}">
+                <div class="flex items-start gap-4">
+                    <!-- Avatar -->
+                    <div class="flex-shrink-0">
+                        <a href="{{ route('users.show', $post->user->mention) }}">
+                            <img src="{{ asset('storage/' . ($post->user->avatar ?? '')) }}" alt="{{ $post->user->name }}"
+                                class="h-24 w-24 rounded-full object-cover"
+                                onerror="this.onerror=null;this.src='{{ asset('images/default-avatar.png') }}';">
+                        </a>
+                    </div>
 
-                <div class="flex-1">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <a href="{{ route('posts.show', [$post->user->mention, $post->slug]) }}"
-                                class="hover:underline">
-                                <h2 class="text-lg font-semibold">{{ $post->title }}</h2>
-                            </a>
+                    <div class="flex-1">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <a href="{{ route('posts.show', [$post->user->mention, $post->slug]) }}"
+                                    class="hover:underline">
+                                    <h2 class="text-lg font-semibold">{{ $post->title }}</h2>
+                                </a>
 
-                            <div class="text-sm text-gray-500">
-                                Bởi <strong>{{ $post->user->name }}</strong>
-                                <div>
-                                    {{ $post->created_at->format('d/m/Y') }} ·
-                                    {{ $post->created_at->diffForHumans() }}
+                                <div class="text-sm text-gray-500">
+                                    Bởi <strong>{{ $post->user->name }}</strong>
+                                    <div>
+                                        {{ $post->created_at->format('d/m/Y') }} ·
+                                        {{ $post->created_at->diffForHumans() }}
+                                    </div>
                                 </div>
                             </div>
+
+                            <!-- Dropdown for edit/delete options -->
+                            @if (auth()->check() && auth()->user()->id === $post->user_id)
+                                <div class="dropdown">
+                                    <button class="dropdown-toggle" type="button" data-post-id="{{ $post->id }}">
+                                        <i class="fa-solid fa-ellipsis-vertical"></i>
+                                    </button>
+                                    <div class="dropdown-menu" id="dropdown-menu-{{ $post->id }}">
+                                        <a href="{{ route('posts.edit', [$post->user->mention, $post->slug]) }}">Sửa</a>
+                                        <form action="{{ route('posts.destroy', [$post->user->mention, $post->slug]) }}"
+                                            method="POST" class="delete-form">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="text-red-500"
+                                                onclick="return confirm('Bạn có chắc chắn muốn xóa bài viết này?');">Xóa</button>
+                                        </form>
+                                    </div>
+                                </div>
+                            @endif
                         </div>
 
-                        <!-- Dropdown for edit/delete options -->
-                        @if (auth()->check() && auth()->user()->id === $post->user_id)
-                            <div class="dropdown">
-                                <button class="dropdown-toggle" type="button" data-post-id="{{ $post->id }}">
-                                    <i class="fa-solid fa-ellipsis-vertical"></i>
-                                </button>
-                                <div class="dropdown-menu" id="dropdown-menu-{{ $post->id }}">
-                                    <a href="{{ route('posts.edit', [$post->user->mention, $post->slug]) }}">Sửa</a>
-                                    <form action="{{ route('posts.destroy', [$post->user->mention, $post->slug]) }}"
-                                        method="POST" class="delete-form">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="text-red-500"
-                                            onclick="return confirm('Bạn có chắc chắn muốn xóa bài viết này?');">Xóa</button>
-                                    </form>
+                        <!-- Content -->
+                        <p class="mt-3 text-sm text-gray-800 line-clamp-3">{!! nl2br(e($post->content)) !!}</p>
+
+                        <!-- Hashtags -->
+                        @if (!empty($post->hashtag))
+                            <div class="mt-3 flex flex-wrap gap-2">
+                                @php
+                                    // Tách hashtag từ cột hashtag, loại bỏ ký tự # và chuẩn hóa
+                                    $tags = array_map('trim', explode(',', str_replace('#', '', $post->hashtag)));
+                                    // Lấy danh sách hashtag hiện tại từ URL
+                                    $currentHashtags = array_map('trim', explode(',', $hashtag));
+                                    // Loại bỏ trùng lặp và chuẩn hóa
+                                    $currentHashtags = array_unique(array_map('strtolower', $currentHashtags));
+                                    // Tách hashtag thành hai nhóm: đang chọn và không chọn
+                                    $selectedTags = [];
+                                    $otherTags = [];
+                                    foreach ($tags as $tag) {
+                                        if (in_array(strtolower($tag), $currentHashtags)) {
+                                            $selectedTags[] = $tag;
+                                        } else {
+                                            $otherTags[] = $tag;
+                                        }
+                                    }
+                                    // Kết hợp danh sách: hashtag đang chọn trước, sau đó đến hashtag không chọn
+                                    $sortedTags = array_merge($selectedTags, $otherTags);
+                                @endphp
+                                @foreach ($sortedTags as $tag)
+                                    @php
+                                        // Kiểm tra xem hashtag có trong danh sách hiện tại không
+                                        $isCurrentTag = in_array(strtolower($tag), $currentHashtags);
+                                        // Tạo danh sách hashtag mới
+                                        if ($isCurrentTag) {
+                                            // Loại bỏ hashtag được nhấp khỏi danh sách
+                                            $newHashtagList = implode(',', array_diff($currentHashtags, [strtolower($tag)]));
+                                        } else {
+                                            // Thêm hashtag mới vào danh sách
+                                            $newHashtagList = $hashtag ? $hashtag . ',' . $tag : $tag;
+                                        }
+                                        // Nếu danh sách rỗng, chuyển về trang mặc định
+                                        $newHashtagList = $newHashtagList ?: 'empty';
+                                    @endphp
+                                    <a href="{{ route('posts.byHashtag', $newHashtagList) }}"
+                                       class="text-xs px-2 py-1 rounded-full {{ $isCurrentTag ? 'bg-black text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200' }}">
+                                        #{{ $tag }}
+                                    </a>
+                                @endforeach
+                            </div>
+                        @endif
+
+                        <!-- Media gallery -->
+                        @if ($post->media && $post->media->count())
+                            <div class="mt-4">
+                                <div class="post-images">
+                                    @foreach ($post->media as $m)
+                                        <div class="image-box mr-2">
+                                            @if ($m->media_type === 'image')
+                                                <img data-src="{{ asset('storage/' . $m->media_path) }}" alt="Ảnh bài viết"
+                                                    class="post-image" loading="lazy">
+                                            @elseif ($m->media_type === 'video')
+                                                <video controls class="rounded-lg max-h-60">
+                                                    <source src="{{ asset('storage/' . $m->media_path) }}" type="video/mp4">
+                                                    Trình duyệt không hỗ trợ video.
+                                                </video>
+                                            @endif
+                                        </div>
+                                    @endforeach
                                 </div>
                             </div>
                         @endif
-                    </div>
 
-                    <!-- Content -->
-                    <p class="mt-3 text-sm text-gray-800 line-clamp-3">{!! nl2br(e($post->content)) !!}</p>
-
-                    <!-- Hashtags -->
-                    @if (!empty($post->hashtag))
-                        <div class="mt-3 flex flex-wrap gap-2">
-                            @foreach (explode(',', $post->hashtag) as $tag)
-                                <a href="{{ route('posts.byHashtag', ['hashtag' => trim($tag)]) }}"
-                                    class="text-xs px-2 py-1 bg-gray-100 rounded-full text-gray-600 hover:bg-gray-200">
-                                    #{{ trim($tag) }}
-                                </a>
-                            @endforeach
-                        </div>
-                    @endif
-                    <!-- Media gallery -->
-                    @if ($post->media && $post->media->count())
-                        <div class="mt-4">
-                            <div class="post-images">
-                                @foreach ($post->media as $m)
-                                    <div class="image-box mr-2">
-                                        @if ($m->media_type === 'image')
-                                            <img data-src="{{ asset('storage/' . $m->media_path) }}" alt="Ảnh bài viết"
-                                                class="post-image" loading="lazy">
-                                        @elseif ($m->media_type === 'video')
-                                            <video controls class="rounded-lg max-h-60">
-                                                <source src="{{ asset('storage/' . $m->media_path) }}" type="video/mp4">
-                                                Trình duyệt không hỗ trợ video.
-                                            </video>
-                                        @endif
-                                    </div>
-                                @endforeach
+                        <!-- Actions (like/share/comment) -->
+                        <div class="mt-4 flex items-center gap-4 text-sm text-gray-600">
+                            <div class="flex items-center gap-2">
+                                @include('layouts.like', ['post' => $post])
                             </div>
+                            <div class="flex items-center gap-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
+                                    stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8s-9-3.582-9-8 4.03-8 9-8 9 3.582 9 8z" />
+                                </svg>
+                                <span>{{ $post->shares ?? 0 }}</span>
+                            </div>
+                            <div class="ml-auto text-gray-400">{{ $post->views ?? 0 }} lượt xem</div>
                         </div>
-                    @endif
-
-                    <!-- Actions (like/share/comment) -->
-                    <div class="mt-4 flex items-center gap-4 text-sm text-gray-600">
-                        <div class="flex items-center gap-2">
-                            @include('layouts.like', ['post' => $post])
-                        </div>
-                        <div class="flex items-center gap-2">
-                            <a href="{{ route('posts.show', [$post->user->mention, $post->slug]) }}"> <i class="fa-regular fa-comment"></i>
-                                <span>{{ $post->allcomments()->count() ?? 0 }}</span>
-                            </a>
-                        </div>
-                        <div class="ml-auto text-gray-400">{{ $post->views ?? 0 }} lượt xem</div>
                     </div>
                 </div>
-            </div>
-        </article>
-    @endforeach
+            </article>
+        @endforeach
+
+        <!-- Pagination -->
+        {{ $posts->links() }}
+    @endif
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
