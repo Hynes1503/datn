@@ -18,6 +18,7 @@ class Post extends Model
         'likes',
         'shares',
         'views',
+        'room_id',
     ];
 
     protected $casts = [
@@ -64,5 +65,9 @@ class Post extends Model
     public function isLikedBy(User $user)
     {
         return $this->likes()->where('user_id', $user->id)->exists();
+    }
+    public function room()
+    {
+        return $this->belongsTo(Room::class);
     }
 }

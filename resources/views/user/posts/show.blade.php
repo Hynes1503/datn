@@ -157,7 +157,7 @@
             <div class="flex-shrink-0">
                 <a href="{{ route('users.show', $post->user->mention) }}">
                     <img src="{{ asset('storage/' . ($post->user->avatar ?? '')) }}" alt="{{ $post->user->name }}"
-                        class="h-24 w-24 rounded-full object-cover"
+                        class="h-20 w-20 rounded-full object-cover"
                         onerror="this.onerror=null;this.src='{{ asset('images/default-avatar.png') }}';">
                 </a>
             </div>

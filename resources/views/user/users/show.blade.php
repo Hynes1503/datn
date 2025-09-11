@@ -166,7 +166,8 @@
         .floating-heart {
             position: absolute;
             font-size: 1.2rem;
-            color: #ef4444; /* đỏ-500 */
+            color: #ef4444;
+            /* đỏ-500 */
             animation: floatUp 1s ease-out forwards;
             pointer-events: none;
         }
@@ -176,10 +177,12 @@
                 opacity: 1;
                 transform: translateY(0) scale(1);
             }
+
             50% {
                 opacity: 0.8;
                 transform: translateY(-30px) scale(1.3);
             }
+
             100% {
                 opacity: 0;
                 transform: translateY(-60px) scale(0.8);
@@ -193,14 +196,17 @@
     </style>
 
     <header class="mb-6 bg-white rounded-2xl shadow-sm p-6 flex items-center gap-6">
-        <img src="{{ $user->avatar_url }}" alt="{{ $user->name }}" class="h-24 w-24 rounded-full object-cover">
+        <img src="{{ $user->avatar_url }}" alt="{{ $user->name }}" class="h-20 w-20 rounded-full object-cover">
         <div class="flex-1">
             <div class="flex items-center justify-between">
                 <div>
-                    <h1 class="text-2xl font-bold">{{ $user->name }}</h1>
-                    <p class="text-gray-600">{{ "@$user->mention" }}</p>
+                    <h5 class="text-xl font-bold">
+                        {{ $user->name }}
+                        <span class="text-gray-600 font-normal">
+                            {{ "@$user->mention" }}
+                        </span>
+                    </h5>
                 </div>
-
                 <div class="flex items-center gap-4">
                     @if (auth()->check() && auth()->id() === $user->id)
                         <div>
@@ -225,7 +231,9 @@
                 </div>
             </div>
 
-            <div class="mt-3 text-sm text-gray-500">
+            <div class="mt-2 text-sm text-gray-500">
+                @include('layouts._followers')
+
                 @if ($user->profile_visibility['dob'] ?? false)
                     <p>Ngày sinh: {{ $user->dob?->format('d/m/Y') }}</p>
                 @endif
@@ -299,7 +307,9 @@
                                     // Lấy danh sách hashtag từ bài viết, loại bỏ ký tự # và chuẩn hóa
                                     $tags = array_map('trim', explode(',', str_replace('#', '', $post->hashtag)));
                                     // Lấy danh sách hashtag hiện tại từ URL (nếu có)
-                                    $currentHashtags = request()->route('hashtag') ? array_map('trim', explode(',', request()->route('hashtag'))) : [];
+                                    $currentHashtags = request()->route('hashtag')
+                                        ? array_map('trim', explode(',', request()->route('hashtag')))
+                                        : [];
                                     $currentHashtags = array_unique(array_map('strtolower', $currentHashtags));
                                     // Tách hashtag thành hai nhóm: đang chọn và không chọn
                                     $selectedTags = [];
@@ -321,16 +331,21 @@
                                         // Tạo danh sách hashtag mới
                                         if ($isCurrentTag) {
                                             // Loại bỏ hashtag được nhấp khỏi danh sách
-                                            $newHashtagList = implode(',', array_diff($currentHashtags, [strtolower($tag)]));
+                                            $newHashtagList = implode(
+                                                ',',
+                                                array_diff($currentHashtags, [strtolower($tag)]),
+                                            );
                                         } else {
                                             // Thêm hashtag mới vào danh sách
-                                            $newHashtagList = $currentHashtags ? implode(',', $currentHashtags) . ',' . $tag : $tag;
+                                            $newHashtagList = $currentHashtags
+                                                ? implode(',', $currentHashtags) . ',' . $tag
+                                                : $tag;
                                         }
                                         // Nếu danh sách rỗng, chuyển về trang mặc định
                                         $newHashtagList = $newHashtagList ?: 'empty';
                                     @endphp
                                     <a href="{{ route('posts.byHashtag', $newHashtagList) }}"
-                                       class="text-xs px-2 py-1 rounded-full {{ $isCurrentTag ? 'bg-black text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200' }}">
+                                        class="text-xs px-2 py-1 rounded-full {{ $isCurrentTag ? 'bg-black text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200' }}">
                                         #{{ $tag }}
                                     </a>
                                 @endforeach

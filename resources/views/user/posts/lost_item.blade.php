@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
-@section('title', 'Bài viết với hashtag #' . $hashtag)
-@section('menuTitle', 'Bài viết với hashtag #' . $hashtag)
+@section('title', 'Tìm đồ - Mất đồ')
+@section('menuTitle', 'Tìm đồ / Mất đồ')
 
 @section('content')
     <style>
@@ -128,11 +128,11 @@
             background-color: #fee2e2;
         }
 
-        /* Tim bay */
+        /* Floating heart */
         .floating-heart {
             position: absolute;
             font-size: 1.2rem;
-            color: #ef4444; /* đỏ-500 */
+            color: #ef4444;
             animation: floatUp 1s ease-out forwards;
             pointer-events: none;
         }
@@ -168,7 +168,7 @@
     @endif
 
     @if ($posts->isEmpty())
-        <p class="text-gray-500 text-center">Không có bài viết nào với hashtag #{{ $hashtag }}.</p>
+        <p class="text-gray-500 text-center">Không có bài viết nào với hashtag #timdo hoặc #matdo.</p>
     @else
         @foreach ($posts as $post)
             <article class="post-article" data-id="{{ $post->id }}">
@@ -177,7 +177,7 @@
                     <div class="flex-shrink-0">
                         <a href="{{ route('users.show', $post->user->mention) }}">
                             <img src="{{ asset('storage/' . ($post->user->avatar ?? '')) }}" alt="{{ $post->user->name }}"
-                                class="h-20 w-20 rounded-full object-cover"
+                                class="h-20 w-200 rounded-full object-cover"
                                 onerror="this.onerror=null;this.src='{{ asset('images/default-avatar.png') }}';">
                         </a>
                     </div>
@@ -226,42 +226,12 @@
                         @if (!empty($post->hashtag))
                             <div class="mt-3 flex flex-wrap gap-2">
                                 @php
-                                    // Tách hashtag từ cột hashtag, loại bỏ ký tự # và chuẩn hóa
                                     $tags = array_map('trim', explode(',', str_replace('#', '', $post->hashtag)));
-                                    // Lấy danh sách hashtag hiện tại từ URL
-                                    $currentHashtags = array_map('trim', explode(',', $hashtag));
-                                    // Loại bỏ trùng lặp và chuẩn hóa
-                                    $currentHashtags = array_unique(array_map('strtolower', $currentHashtags));
-                                    // Tách hashtag thành hai nhóm: đang chọn và không chọn
-                                    $selectedTags = [];
-                                    $otherTags = [];
-                                    foreach ($tags as $tag) {
-                                        if (in_array(strtolower($tag), $currentHashtags)) {
-                                            $selectedTags[] = $tag;
-                                        } else {
-                                            $otherTags[] = $tag;
-                                        }
-                                    }
-                                    // Kết hợp danh sách: hashtag đang chọn trước, sau đó đến hashtag không chọn
-                                    $sortedTags = array_merge($selectedTags, $otherTags);
+                                    $activeTags = ['timdo', 'matdo'];
                                 @endphp
-                                @foreach ($sortedTags as $tag)
-                                    @php
-                                        // Kiểm tra xem hashtag có trong danh sách hiện tại không
-                                        $isCurrentTag = in_array(strtolower($tag), $currentHashtags);
-                                        // Tạo danh sách hashtag mới
-                                        if ($isCurrentTag) {
-                                            // Loại bỏ hashtag được nhấp khỏi danh sách
-                                            $newHashtagList = implode(',', array_diff($currentHashtags, [strtolower($tag)]));
-                                        } else {
-                                            // Thêm hashtag mới vào danh sách
-                                            $newHashtagList = $hashtag ? $hashtag . ',' . $tag : $tag;
-                                        }
-                                        // Nếu danh sách rỗng, chuyển về trang mặc định
-                                        $newHashtagList = $newHashtagList ?: 'empty';
-                                    @endphp
-                                    <a href="{{ route('posts.byHashtag', $newHashtagList) }}"
-                                       class="text-xs px-2 py-1 rounded-full {{ $isCurrentTag ? 'bg-black text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200' }}">
+                                @foreach ($tags as $tag)
+                                    <a href="{{ route('posts.byHashtag', $tag) }}"
+                                       class="text-xs px-2 py-1 rounded-full {{ in_array(strtolower($tag), $activeTags) ? 'bg-black text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200' }}">
                                         #{{ $tag }}
                                     </a>
                                 @endforeach
@@ -351,11 +321,11 @@
             images.forEach(image => imageObserver.observe(image));
 
             // Like button with floating heart animation using event delegation
-            let isProcessing = false; // Prevent multiple rapid clicks
+            let isProcessing = false;
 
             document.addEventListener('submit', async function(event) {
                 const form = event.target.closest('.like-form');
-                if (!form || isProcessing) return; // Skip if not a like form or processing
+                if (!form || isProcessing) return;
                 event.preventDefault();
                 isProcessing = true;
 
@@ -407,7 +377,6 @@
                         throw new Error(data.error || 'Lỗi không xác định');
                     }
 
-                    // Sync with server
                     likeCount.textContent = data.likes_count;
                 } catch (error) {
                     console.error('Lỗi fetch:', error);
@@ -424,7 +393,7 @@
                         likeCount.textContent = count;
                     }
                 } finally {
-                    isProcessing = false; // Reset processing flag
+                    isProcessing = false;
                 }
             });
 

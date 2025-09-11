@@ -13,6 +13,10 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\View;
+use App\Models\Building;
+use App\Models\Floor;
+use App\Models\Room;
 
 class PostController extends Controller
 {
@@ -33,7 +37,8 @@ class PostController extends Controller
      */
     public function create()
     {
-        return view('user.posts.create');
+        $buildings = Building::orderBy('name')->get();
+        return view('user.posts.create', compact('buildings'));
     }
 
     /**
@@ -47,6 +52,7 @@ class PostController extends Controller
             'media'   => 'nullable|array',
             'media.*' => 'file|mimes:jpg,jpeg,png,gif,webp,mp4,avi,mov,webm|max:51200',
             'hashtag' => 'nullable|string|max:255',
+            'room_id' => 'nullable|exists:rooms,id',
         ]);
 
         // Kiểm tra user
@@ -65,8 +71,8 @@ class PostController extends Controller
             'content' => $request->content,
             'hashtag' => $hashtag,
             'slug'    => $slug,
+            'room_id' => $request->room_id,
         ]);
-
 
         if (!$post) {
             Log::error('Post not created', ['user_id' => $user->id, 'request' => $request->all()]);
@@ -164,6 +170,7 @@ class PostController extends Controller
             'media.*' => 'file|mimes:jpg,jpeg,png,gif,webp,mp4,mov,avi,webm|max:51200', // 50MB
             'delete_media' => 'nullable|array',
             'delete_media.*' => 'integer|exists:post_media,id',
+            'room_id' => 'nullable|exists:rooms,id',
         ]);
 
         // Cập nhật thông tin bài viết
@@ -174,6 +181,7 @@ class PostController extends Controller
             'title'   => $request->title,
             'content' => $request->content,
             'hashtag' => $hashtag,
+            'room_id' => $request->room_id,
         ]);
 
 
@@ -286,5 +294,18 @@ class PostController extends Controller
             'posts' => $posts,
             'hashtag' => $hashtag,
         ]);
+    }
+
+    public function lost_index()
+    {
+        $posts = Post::where(function ($query) {
+            $query->where('hashtag', 'LIKE', '%timdo%')
+                ->orWhere('hashtag', 'LIKE', '%matdo%');
+        })
+            ->with(['user', 'media'])
+            ->latest()
+            ->paginate(10);
+
+        return view('user.posts.lost_item', compact('posts'));
     }
 }

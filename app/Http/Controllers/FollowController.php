@@ -16,7 +16,7 @@ class FollowController extends Controller
         }
 
         $authUser = Auth::user();
-        
+
         if (!$authUser->isFollowing($user)) {
             $authUser->follows()->attach($user->id);
             $user->notify(new FollowNotification($authUser));
@@ -34,5 +34,20 @@ class FollowController extends Controller
         Auth::user()->follows()->detach($user->id);
 
         return back()->with('success', "Đã bỏ theo dõi {$user->name}.");
+    }
+
+    public function getFollowers(User $user)
+    {
+        $followers = $user->followers()->get()->map(function ($follower) {
+            return [
+                'id' => $follower->id,
+                'name' => $follower->name,
+                'mention' => $follower->mention,
+                'avatar' => $follower->avatar,
+                'is_mutual' => Auth::check() && Auth::user()->isFollowing($follower) && $follower->isFollowing(Auth::user()),
+            ];
+        });
+
+        return response()->json(['followers' => $followers]);
     }
 }

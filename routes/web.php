@@ -12,7 +12,8 @@ use App\Http\Controllers\Admin\AdminController;
 use App\Http\Controllers\FollowController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\SearchController;
-
+use App\Http\Controllers\LocationController;
+use App\Http\Controllers\Admin\RoomController;
 // Route gốc trả về trang login
 Route::get('/', function () {
     return view('auth.login');
@@ -23,7 +24,14 @@ Route::prefix('admin')->group(function () {
     // Login không qua middleware
     Route::get('/login', [AdminController::class, 'showLoginForm'])->name('admin.login');
     Route::post('/login', [AdminController::class, 'login'])->name('admin.login.submit');
+    Route::get('/buildings/create', [RoomController::class, 'createBuilding'])->name('admin.buildings.create');
+    Route::post('/buildings', [RoomController::class, 'storeBuilding'])->name('admin.buildings.store');
 
+    Route::get('/floors/create', [RoomController::class, 'createFloor'])->name('admin.floors.create');
+    Route::post('/floors', [RoomController::class, 'storeFloor'])->name('admin.floors.store');
+    Route::get( '/get-floors/{building}', action: [RoomController::class, 'getFloors'])->name('admin.getFloors');
+    Route::get('/rooms/create', [RoomController::class, 'createRoom'])->name('admin.rooms.create');
+    Route::post('/rooms', [RoomController::class, 'storeRoom'])->name('admin.rooms.store');
     // Các route cần đăng nhập admin
     Route::middleware('auth.admin')->group(function () {
         Route::get('/', [AdminController::class, 'index'])->name('admin.dashboard');
@@ -43,8 +51,13 @@ Route::get(
 Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
 Route::post('/login', [LoginController::class, 'login']);
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
-Route::get('/hashtag/{hashtag}', [PostController::class, 'byHashtag'])->name('posts.byHashtag'); // ================= POSTS =================
+Route::get('/hashtag/{hashtag}', [PostController::class, 'byHashtag'])->name('posts.byHashtag');
+Route::get('/lost_item', [PostController::class, 'lost_index'])->name('posts.lostItem');
+
+// ================= POSTS =================
 Route::middleware('auth.custom')->group(function () {
+    Route::get('/get-floors/{building}', [LocationController::class, 'getFloors']);
+    Route::get('/get-rooms/{floor}', [LocationController::class, 'getRooms']);
     Route::get('/home', [PostController::class, 'home'])->name('home');
     Route::get('/posts/create', [PostController::class, 'create'])->name('posts.create');
     Route::post('/posts', [PostController::class, 'store'])->name('posts.store');
@@ -57,6 +70,7 @@ Route::get('/search/suggestions', [SearchController::class, 'suggestions'])->nam
 // ================= USERS =================
 Route::prefix('{user:mention}')->group(function () {
     Route::get('/', [UserController::class, 'show'])->name('users.show');
+    Route::get('/followers', [FollowController::class, 'getFollowers'])->name('users.followers');
 
     // Chỉ owner mới được sửa, xoá
     Route::middleware(['auth.custom', 'auth.owner'])->group(function () {

@@ -1,4 +1,4 @@
-@if (Auth::check())
+@auth
     <div id="postModal" class="hidden fixed inset-0 bg-black/30 flex items-center justify-center z-50">
         <div class="bg-white rounded-2xl border border-gray-200 shadow-lg w-full max-w-xl p-4">
             <form action="{{ route('posts.store') }}" method="POST" enctype="multipart/form-data"
@@ -21,6 +21,25 @@
                         <textarea name="content" placeholder="Bạn đang nghĩ gì?" required
                             class="w-full text-base resize-none border-0 focus:ring-0 placeholder-gray-400 mt-2"></textarea>
                     </div>
+                </div>
+
+                <!-- Địa điểm (Tòa/Tầng/Phòng) -->
+                <div class="mb-3">
+                    <label class="block text-sm">Địa điểm</label>
+                    <select name="room_id" class="w-full border p-2 rounded text-sm" required>
+                        <option value="">-- Chọn Phòng --</option>
+                        @foreach ($buildings as $building)
+                            <optgroup label="{{ $building->name }}">
+                                @foreach ($building->floors as $floor)
+                                    @foreach ($floor->rooms as $room)
+                                        <option value="{{ $room->id }}">
+                                            {{ $floor->name ?? 'Tầng ' . $floor->floor_number }} - {{ $room->name ?? $room->room_number }}
+                                        </option>
+                                    @endforeach
+                                @endforeach
+                            </optgroup>
+                        @endforeach
+                    </select>
                 </div>
 
                 <!-- Preview Media -->
@@ -59,4 +78,4 @@
             </form>
         </div>
     </div>
-@endif
+@endauth

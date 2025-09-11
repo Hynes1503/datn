@@ -169,13 +169,20 @@
         <article class="post-article" data-id="{{ $post->id }}">
             <div class="flex items-start gap-4">
                 <!-- Avatar -->
-                <div class="flex-shrink-0">
+                <div class="flex-shrink-0 text-center w-20">
                     <a href="{{ route('users.show', $post->user->mention) }}">
                         <img src="{{ asset('storage/' . ($post->user->avatar ?? '')) }}" alt="{{ $post->user->name }}"
-                            class="h-24 w-24 rounded-full object-cover"
+                            class="h-20 w-20 rounded-full object-cover mx-auto"
                             onerror="this.onerror=null;this.src='{{ asset('images/default-avatar.png') }}';">
                     </a>
+                    <a href="{{ route('users.show', $post->user->mention) }}" class="hover:underline">
+                        <strong class="block text-sm break-words leading-tight">
+                            {{ $post->user->name }}
+                        </strong>
+                    </a>
+
                 </div>
+
 
                 <div class="flex-1">
                     <div class="flex items-center justify-between">
@@ -186,11 +193,18 @@
                             </a>
 
                             <div class="text-sm text-gray-500">
-                                Bởi <strong>{{ $post->user->name }}</strong>
                                 <div>
                                     {{ $post->created_at->format('d/m/Y') }} ·
                                     {{ $post->created_at->diffForHumans() }}
                                 </div>
+
+                                {{-- Hiển thị phòng --}}
+                                @if ($post->room)
+                                    <div class="flex items-center gap-1 text-gray-600 mt-1">
+                                        <i class="fa-solid fa-location-dot text-red-500"></i>
+                                        <span>{{ $post->room->name }}</span>
+                                    </div>
+                                @endif
                             </div>
                         </div>
 
@@ -255,7 +269,8 @@
                             @include('layouts.like', ['post' => $post])
                         </div>
                         <div class="flex items-center gap-2">
-                            <a href="{{ route('posts.show', [$post->user->mention, $post->slug]) }}"> <i class="fa-regular fa-comment"></i>
+                            <a href="{{ route('posts.show', [$post->user->mention, $post->slug]) }}"> <i
+                                    class="fa-regular fa-comment"></i>
                                 <span>{{ $post->allcomments()->count() ?? 0 }}</span>
                             </a>
                         </div>
