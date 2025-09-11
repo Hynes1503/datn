@@ -22,15 +22,22 @@ class PostController extends Controller
 {
     public function index()
     {
-        $posts = Post::with('user')->latest()->paginate(10);
+        $posts = Post::with('user')->latest();
         return view('user.posts.index', compact('posts'));
     }
 
-    public function home()
+    public function home(Request $request)
     {
-        $posts = Post::with('user')->latest()->paginate(10);
+        $posts = Post::with(['user', 'media', 'room'])->latest()->paginate(10);
+        if ($request->ajax()) {
+            return response()->json([
+                'posts' => $posts->items(),
+                'next_page_url' => $posts->nextPageUrl(),
+            ]);
+        }
         return view('home', compact('posts'));
     }
+
 
     /**
      * Form tạo bài viết

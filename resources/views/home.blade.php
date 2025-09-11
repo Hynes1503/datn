@@ -280,7 +280,10 @@
             </div>
         </article>
     @endforeach
-
+    <div class="mt-4">
+        {{ $posts->links() }}
+    </div>
+    {{-- @include('layouts.minimap') --}}
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             const articles = document.querySelectorAll('.post-article');

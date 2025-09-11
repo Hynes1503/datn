@@ -140,28 +140,41 @@
             </div>
         @endif
     </div>
-    <!-- Navbar -->
-    @include('layouts.navbar')
-    <!-- Content Area -->
-    <div class="flex-1 flex justify-center p-4">
-        <div class="w-full max-w-3xl">
-            <!-- Dropdown Trigger Button -->
-            <div class="flex justify-center mb-4 dropdown-container">
-                <button id="dropdownToggle"
-                    class="text-gray-600 hover:text-gray-900 bg-white px-4 py-2 rounded-md shadow-sm flex items-center gap-2">
-                    <i id="dropdownIcon" class="fa-solid fa-chevron-right"></i>
-                    <span id="dropdownLabel">@yield('menuTitle', 'Danh mục')</span>
-                </button>
-                <!-- Dropdown Menu -->
-                <div id="dropdownMenu" class="dropdown-menu">
-                    <a href="{{ route('users.show', Auth::user()->mention) }}">Trang cá nhân</a>
-                    <a href="{{ route('home') }}">Sự kiện mới</a>
-                    <a href="{{ route('posts.lostItem') }}">Tìm đồ/Mất đồ</a>
+
+    <!-- Main Layout -->
+    <div class="flex w-full gap-4">
+        <!-- Navbar Area -->
+        <div class="w-1/5 bg-gray-200">
+            @include('layouts.navbar')
+        </div>
+
+        <!-- Content Area -->
+        <div class="w-1/2 bg-gray-200 p-4 pr-1/4">
+            <div class="w-full mx-auto">
+                <!-- Dropdown Trigger Button -->
+                <div class="flex justify-center mb-4 dropdown-container">
+                    <button id="dropdownToggle"
+                        class="text-gray-600 hover:text-gray-900 bg-white px-4 py-2 rounded-md shadow-sm flex items-center gap-2">
+                        <i id="dropdownIcon" class="fa-solid fa-chevron-right"></i>
+                        <span id="dropdownLabel">@yield('menuTitle', 'Danh mục')</span>
+                    </button>
+                    <!-- Dropdown Menu -->
+                    <div id="dropdownMenu" class="dropdown-menu">
+                        <a href="{{ route('users.show', Auth::user()->mention) }}">Trang cá nhân</a>
+                        <a href="{{ route('home') }}">Sự kiện mới</a>
+                        <a href="{{ route('posts.lostItem') }}">Tìm đồ/Mất đồ</a>
+                    </div>
                 </div>
+                @yield('content')
             </div>
-            @yield('content')
+        </div>
+
+        <!-- Minimap Area -->
+        <div class="w-1/4 bg-gray-200 fixed top-0 right-0 h-screen overflow-y-auto">
+            @include('layouts.minimap')
         </div>
     </div>
+
     <script>
         // --- Handle dropdown ---
         const dropdownToggle = document.getElementById('dropdownToggle');

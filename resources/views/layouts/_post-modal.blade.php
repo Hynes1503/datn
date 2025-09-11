@@ -26,7 +26,7 @@
                 <!-- Địa điểm (Tòa/Tầng/Phòng) -->
                 <div class="mb-3">
                     <label class="block text-sm">Địa điểm</label>
-                    <select name="room_id" class="w-full border p-2 rounded text-sm" required>
+                    <select name="room_id" class="w-full border p-2 rounded text-sm">
                         <option value="">-- Chọn Phòng --</option>
                         @foreach ($buildings as $building)
                             <optgroup label="{{ $building->name }}">
