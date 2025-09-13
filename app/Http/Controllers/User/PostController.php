@@ -38,7 +38,6 @@ class PostController extends Controller
         return view('home', compact('posts'));
     }
 
-
     /**
      * Form tạo bài viết
      */
@@ -59,7 +58,18 @@ class PostController extends Controller
             'media'   => 'nullable|array',
             'media.*' => 'file|mimes:jpg,jpeg,png,gif,webp,mp4,avi,mov,webm|max:51200',
             'hashtag' => 'nullable|string|max:255',
-            'room_id' => 'nullable|exists:rooms,id',
+            'room_id' => [
+                'nullable',
+                'exists:rooms,id',
+                function ($attribute, $value, $fail) {
+                    if ($value) {
+                        $room = Room::with('floor.building')->find($value);
+                        if ($room && (!$room->floor || !$room->floor->building)) {
+                            $fail('The selected room must belong to a valid floor and building.');
+                        }
+                    }
+                },
+            ],
         ]);
 
         // Kiểm tra user
@@ -72,6 +82,7 @@ class PostController extends Controller
         $slug = $this->generateRandomSlug(12);
 
         $hashtag = $request->hashtag ? str_replace('#', '', $request->hashtag) : null;
+        $buildingId = $this->getBuildingIdFromRoom($request->room_id);
 
         $post = $user->posts()->create([
             'title'   => $request->title,
@@ -79,6 +90,7 @@ class PostController extends Controller
             'hashtag' => $hashtag,
             'slug'    => $slug,
             'room_id' => $request->room_id,
+            'building_id' => $buildingId,
         ]);
 
         if (!$post) {
@@ -121,6 +133,21 @@ class PostController extends Controller
         }
 
         return $slug;
+    }
+
+    /**
+     * Lấy building_id từ room_id
+     */
+    private function getBuildingIdFromRoom($roomId)
+    {
+        $buildingId = null;
+        if ($roomId) {
+            $room = Room::with('floor.building')->find($roomId);
+            if ($room && $room->floor && $room->floor->building) {
+                $buildingId = $room->floor->building->id;
+            }
+        }
+        return $buildingId;
     }
 
     /**
@@ -174,23 +201,34 @@ class PostController extends Controller
             'content' => 'required|string',
             'hashtag' => 'nullable|string|max:255',
             'media'   => 'nullable|array',
-            'media.*' => 'file|mimes:jpg,jpeg,png,gif,webp,mp4,mov,avi,webm|max:51200', // 50MB
+            'media.*' => 'file|mimes:jpg,jpeg,png,gif,webp,mp4,mov,avi,webm|max:51200',
             'delete_media' => 'nullable|array',
             'delete_media.*' => 'integer|exists:post_media,id',
-            'room_id' => 'nullable|exists:rooms,id',
+            'room_id' => [
+                'nullable',
+                'exists:rooms,id',
+                function ($attribute, $value, $fail) {
+                    if ($value) {
+                        $room = Room::with('floor.building')->find($value);
+                        if ($room && (!$room->floor || !$room->floor->building)) {
+                            $fail('The selected room must belong to a valid floor and building.');
+                        }
+                    }
+                },
+            ],
         ]);
 
         // Cập nhật thông tin bài viết
-        // Loại bỏ toàn bộ dấu #
         $hashtag = $request->hashtag ? str_replace('#', '', $request->hashtag) : null;
+        $buildingId = $this->getBuildingIdFromRoom($request->room_id);
 
         $post->update([
             'title'   => $request->title,
             'content' => $request->content,
             'hashtag' => $hashtag,
             'room_id' => $request->room_id,
+            'building_id' => $buildingId,
         ]);
-
 
         // Xử lý xóa media được chọn
         if ($request->filled('delete_media')) {
@@ -282,6 +320,7 @@ class PostController extends Controller
 
         return back()->with('success', $wasLiked ? 'Đã bỏ thích bài viết.' : 'Đã thích bài viết.');
     }
+
     public function byHashtag($hashtag)
     {
         // Tách và chuẩn hóa danh sách hashtag, loại bỏ trùng lặp

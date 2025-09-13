@@ -19,6 +19,7 @@ class Post extends Model
         'shares',
         'views',
         'room_id',
+        'building_id',
     ];
 
     protected $casts = [
@@ -69,5 +70,9 @@ class Post extends Model
     public function room()
     {
         return $this->belongsTo(Room::class);
+    }
+    public function building()
+    {
+        return $this->belongsTo(Building::class);
     }
 }
