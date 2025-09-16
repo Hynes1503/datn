@@ -26,6 +26,7 @@
             border-radius: 16px;
             box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
             transition: transform 0.3s ease, box-shadow 0.3s ease;
+            animation: fadeIn 0.5s ease-out;
         }
 
         .container:hover {
@@ -140,7 +141,16 @@
         .preview {
             margin-top: 15px;
             max-width: 320px;
+            max-height: 200px;
+            /* Giới hạn chiều cao */
             border-radius: 12px;
+            border: 1px solid #ccc;
+            display: none;
+            object-fit: contain;
+            /* Đảm bảo ảnh nằm gọn trong khung */
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
         }
 
         .error {
@@ -162,22 +172,6 @@
             padding-left: 20px;
         }
 
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .container {
-            animation: fadeIn 0.5s ease-out;
-        }
-
         .signup-box {
             margin-top: 20px;
             font-size: 15px;
@@ -194,6 +188,18 @@
         .signup-box a:hover {
             color: #333;
             text-decoration: underline;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
     </style>
 </head>
@@ -223,8 +229,9 @@
             <form action="{{ route('register.upload') }}" method="POST" enctype="multipart/form-data">
                 @csrf
                 <div class="upload-box">
-                    <input type="file" name="student_card" id="student_card" required>
+                    <input type="file" name="student_card" id="student_card" accept="image/*" required>
                     <label for="student_card">Ảnh thẻ sinh viên</label>
+                    <img id="preview" class="preview" />
                 </div>
                 <button type="submit" class="btn">Tiếp tục</button>
             </form>
@@ -284,16 +291,34 @@
 
             {{-- Nút quay lại bước 1 --}}
             <a href="{{ route('auth.register') }}" class="back">← Quay lại</a>
-
-            {{-- Preview ảnh --}}
-            {{-- @if (isset($image))
-                <img src="{{ asset('storage/' . $image) }}" class="preview">
-            @endif --}}
         @endif
+
         <div class="signup-box">
             Đã có tài khoản? <a href="{{ route('login') }}">Đăng nhập</a>
         </div>
     </div>
+
+    <script>
+        const input = document.getElementById("student_card");
+        const preview = document.getElementById("preview");
+
+        if (input) {
+            input.addEventListener("change", function() {
+                const file = this.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        preview.src = e.target.result;
+                        preview.style.display = "block";
+                    };
+                    reader.readAsDataURL(file);
+                } else {
+                    preview.src = "";
+                    preview.style.display = "none";
+                }
+            });
+        }
+    </script>
 </body>
 
 </html>

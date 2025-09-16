@@ -24,6 +24,7 @@
             border-radius: 16px;
             box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
             transition: transform 0.3s ease, box-shadow 0.3s ease;
+            animation: fadeIn 0.5s ease-out;
         }
         .container:hover {
             transform: translateY(-5px);
@@ -51,7 +52,7 @@
             padding-left: 20px;
         }
         .input-box {
-            margin-bottom: 25px;
+            margin-bottom: 30px;
             position: relative;
             text-align: center;
         }
@@ -91,6 +92,19 @@
             padding: 0 5px;
             transform: translateY(0);
         }
+        .forgot-link {
+            position: absolute;
+            bottom: -18px;
+            right: 25px;
+            font-size: 13px;
+            color: #000;
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+        .forgot-link:hover {
+            text-decoration: underline;
+            color: #333;
+        }
         .btn {
             width: 100%;
             max-width: 320px;
@@ -129,9 +143,6 @@
             from { opacity: 0; transform: translateY(20px); }
             to { opacity: 1; transform: translateY(0); }
         }
-        .container {
-            animation: fadeIn 0.5s ease-out;
-        }
     </style>
 </head>
 <body>
@@ -163,6 +174,7 @@
             <div class="input-box">
                 <input type="password" name="password" id="password" placeholder=" " required>
                 <label for="password">Mật khẩu</label>
+                <a href="{{ route('password.form') }}" class="forgot-link">Quên mật khẩu?</a>
             </div>
             <button type="submit" class="btn">Đăng nhập</button>
         </form>

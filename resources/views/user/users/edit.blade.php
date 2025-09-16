@@ -19,7 +19,7 @@
 
             <header class="mb-6 flex items-center gap-6">
                 <div>
-                    <img id="avatar-preview" src="{{ $user->avatar ? asset('storage/' . $user->avatar) : '/default-avatar.png' }}" alt="{{ $user->name }}"
+                    <img id="avatar-preview" src="{{ $user->avatar ? asset('storage/' . $user->avatar) : asset('images/default-avatar.png') }}" alt="{{ $user->name }}"
                         class="h-20 w-20 rounded-full object-cover">
                     <input type="file" name="avatar" id="avatar" accept="image/*" class="mt-2 block text-sm">
                     @error('avatar')

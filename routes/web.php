@@ -5,6 +5,7 @@ use App\Http\Controllers\User\MainController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\OCRController;
 use App\Http\Controllers\User\LoginController;
+use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\User\PostController;
 use App\Http\Controllers\User\UserController;
 use App\Http\Controllers\CommentController;
@@ -47,7 +48,10 @@ Route::get(
     '/register/upload',
     fn() => redirect()->route('auth.register')->with('error', 'Truy cập không hợp lệ. Vui lòng tải lên thẻ sinh viên qua form.')
 );
-
+Route::get('/forgot-password', [ForgotPasswordController::class, 'showForm'])->name('password.form');
+Route::post('/forgot-password', [ForgotPasswordController::class, 'sendResetLink'])->name('password.send');
+Route::get('/reset-password/{token}', [ForgotPasswordController::class, 'showResetForm'])->name('password.reset');
+Route::post('/reset-password', [ForgotPasswordController::class, 'reset'])->name('password.update');
 Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
 Route::post('/login', [LoginController::class, 'login']);
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout');

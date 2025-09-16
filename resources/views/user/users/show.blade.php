@@ -134,32 +134,38 @@
         }
 
         /* Follow/Unfollow button styles */
-        .follow-btn,
-        .unfollow-btn {
+        /* .follow-btn {
             padding: 8px 16px;
             border: 1px solid #e5e7eb;
             border-radius: 9999px;
-            color: #4b5563;
-            transition: background-color 0.2s, color 0.2s;
             font-size: 0.875rem;
+            transition: all 0.2s ease;
             display: flex;
             align-items: center;
-            gap: 4px;
-        }
+            gap: 8px;
+        } */
 
-        .follow-btn:hover {
+        .follow-btn.followed {
             background-color: #000000;
-            color: #fff;
+            color: #ffffff;
             border-color: #000000;
         }
 
-        .unfollow-btn {
-            background-color: #f3f3f3;
+        .follow-btn.followed:hover {
+            background-color: #1f2937;
+            /* Màu xám đậm khi hover */
+            border-color: #1f2937;
         }
 
-        .unfollow-btn:hover {
-            background-color: #e5e7eb;
-            color: #4b5563;
+        .follow-btn:not(.followed) {
+            background-color: #ffffff;
+            color: #000000;
+            border-color: #e5e7eb;
+        }
+
+        .follow-btn:not(.followed):hover {
+            background-color: #f3f3f3;
+            border-color: #e5e7eb;
         }
 
         /* Tim bay */
@@ -221,10 +227,10 @@
                             method="POST">
                             @csrf
                             <button type="submit"
-                                class="{{ auth()->user()->isFollowing($user) ? 'unfollow-btn' : 'follow-btn' }}">
+                                class="follow-btn {{ auth()->user()->isFollowing($user) ? 'followed' : '' }} p-3 border border-gray-300 rounded-full text-gray-700 hover:bg-gray-100 transition text-xl">
                                 <i
                                     class="fa-solid {{ auth()->user()->isFollowing($user) ? 'fa-user-minus' : 'fa-user-plus' }}"></i>
-                                {{ auth()->user()->isFollowing($user) ? 'Bỏ theo dõi' : 'Theo dõi' }}
+                                {{-- {{ auth()->user()->isFollowing($user) ? 'Unfollow' : 'Follow' }} --}}
                             </button>
                         </form>
                     @endif
@@ -278,6 +284,12 @@
                                         {{ $post->created_at->format('d/m/Y') }} ·
                                         {{ $post->created_at->diffForHumans() }}
                                     </div>
+                                    @if ($post->room)
+                                        <div class="flex items-center gap-1 text-gray-600 mt-1">
+                                            <i class="fa-solid fa-location-dot text-red-500"></i>
+                                            <span>{{ $post->room->name }}</span>
+                                        </div>
+                                    @endif
                                 </div>
                             </div>
                             @if (auth()->check() && auth()->user()->id === $post->user_id)
@@ -298,7 +310,7 @@
                                 </div>
                             @endif
                         </div>
-
+                        <hr>
                         <p class="mt-3 text-sm text-gray-800 line-clamp-3">{!! nl2br(e($post->content)) !!}</p>
 
                         @if (!empty($post->hashtag))

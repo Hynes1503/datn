@@ -132,7 +132,8 @@
         .floating-heart {
             position: absolute;
             font-size: 1.2rem;
-            color: #ef4444; /* đỏ-500 */
+            color: #ef4444;
+            /* đỏ-500 */
             animation: floatUp 1s ease-out forwards;
             pointer-events: none;
         }
@@ -142,10 +143,12 @@
                 opacity: 1;
                 transform: translateY(0) scale(1);
             }
+
             50% {
                 opacity: 0.8;
                 transform: translateY(-30px) scale(1.3);
             }
+
             100% {
                 opacity: 0;
                 transform: translateY(-60px) scale(0.8);
@@ -218,7 +221,13 @@
                                 </div>
                             @endif
                         </div>
-
+                        @if ($post->room)
+                            <div class="flex items-center gap-1 text-gray-600 mt-1">
+                                <i class="fa-solid fa-location-dot text-red-500"></i>
+                                <span>{{ $post->room->name }}</span>
+                            </div>
+                        @endif
+                        <hr>
                         <!-- Content -->
                         <p class="mt-3 text-sm text-gray-800 line-clamp-3">{!! nl2br(e($post->content)) !!}</p>
 
@@ -252,7 +261,10 @@
                                         // Tạo danh sách hashtag mới
                                         if ($isCurrentTag) {
                                             // Loại bỏ hashtag được nhấp khỏi danh sách
-                                            $newHashtagList = implode(',', array_diff($currentHashtags, [strtolower($tag)]));
+                                            $newHashtagList = implode(
+                                                ',',
+                                                array_diff($currentHashtags, [strtolower($tag)]),
+                                            );
                                         } else {
                                             // Thêm hashtag mới vào danh sách
                                             $newHashtagList = $hashtag ? $hashtag . ',' . $tag : $tag;
@@ -261,7 +273,7 @@
                                         $newHashtagList = $newHashtagList ?: 'empty';
                                     @endphp
                                     <a href="{{ route('posts.byHashtag', $newHashtagList) }}"
-                                       class="text-xs px-2 py-1 rounded-full {{ $isCurrentTag ? 'bg-black text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200' }}">
+                                        class="text-xs px-2 py-1 rounded-full {{ $isCurrentTag ? 'bg-black text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200' }}">
                                         #{{ $tag }}
                                     </a>
                                 @endforeach
@@ -279,7 +291,8 @@
                                                     class="post-image" loading="lazy">
                                             @elseif ($m->media_type === 'video')
                                                 <video controls class="rounded-lg max-h-60">
-                                                    <source src="{{ asset('storage/' . $m->media_path) }}" type="video/mp4">
+                                                    <source src="{{ asset('storage/' . $m->media_path) }}"
+                                                        type="video/mp4">
                                                     Trình duyệt không hỗ trợ video.
                                                 </video>
                                             @endif

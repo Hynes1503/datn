@@ -1,4 +1,3 @@
-
 @php
     // Fetch all buildings with their associated posts, including images, room, and user
     $buildings = App\Models\Building::with(['posts.images', 'posts.room', 'posts.user'])->get();
@@ -7,9 +6,9 @@
     $buildingCoordinates = [
         'A' => ['x' => 430, 'y' => 470], // Nhà A
         'B' => ['x' => 748, 'y' => 560], // Nhà B
-        'K' => ['x' => 178, 'y' => 113], // Nhà K
-        'H' => ['x' => 450, 'y' => 113], // Nhà H
-        'I' => ['x' => 715, 'y' => 113], // Nhà I
+        'K' => ['x' => 178, 'y' => 90], // Nhà K
+        'H' => ['x' => 450, 'y' => 90], // Nhà H
+        'I' => ['x' => 715, 'y' => 90], // Nhà I
         'E' => ['x' => 180, 'y' => 270], // Nhà E
         'X' => ['x' => 390, 'y' => 285], // Nhà xe
         'TV' => ['x' => 556, 'y' => 330], // Thư viện
@@ -19,11 +18,16 @@
 @endphp
 
 <div class="p-4">
+
     <div class="bg-white rounded-lg shadow-md overflow-hidden" onclick="openMapPopup()" role="button" tabindex="0"
         aria-label="Open campus map">
+        <div class="px-4 py-3 border-b border-gray-200">
+            <h2 class="text-base font-semibold text-gray-800">Bản đồ EPU</h2>
+        </div>
         <img src="{{ asset('images/minmap.png') }}" alt="Mini map of Faculty of Electronics and Telecommunications"
             class="w-full">
     </div>
+
 </div>
 
 <div id="mapPopup" class="hidden fixed inset-0 bg-black/60 flex items-center justify-center z-50" role="dialog"
@@ -41,7 +45,21 @@
                 <title id="mapTitle">Bản đồ Trường Đại học Điện lực Hà Nội</title>
 
                 <rect x="0" y="0" width="900" height="760" fill="#ffffff" />
+                <!-- Thêm phần chú thích -->
+                <g class="legend" transform="translate(-150, 620)" aria-label="Map Legend">
+                    <rect x="0" y="0" width="200" height="100" fill="#f8f8f8" stroke="#000" stroke-width="2"
+                        rx="6" />
+                    <text x="10" y="20" font-size="14" font-weight="700" fill="#000">Chú thích</text>
 
+                    <!-- Tòa nhà học thuật -->
+                    <rect x="10" y="30" width="20" height="20" fill="#00000" rx="4" />
+                    <text x="35" y="45" font-size="12" fill="#000">Tòa nhà</text>
+
+                    <!-- Biểu tượng bài đăng -->
+                    <text x="20" y="80" font-family="FontAwesome" font-size="20" fill="#ff0000"
+                        text-anchor="middle">&#xf3c5;</text>
+                    <text x="35" y="80" font-size="12" fill="#000">Vị trí bài đăng/Đồ vật</text>
+                </g>
                 <!-- Map lines -->
                 <line x1="30" y1="30" x2="30" y2="580" stroke="black" stroke-width="4"
                     stroke-dasharray="6 6" />
@@ -145,9 +163,11 @@
                                 $xOffset = ($index % 5) * $offset;
                                 $yOffset = floor($index / 5) * $offset;
                             }
-                            $imageUrl = $post->media->first()
-                                ? asset('storage/' . $post->media->first()->media_path)
+                            $media = $post->media->first();
+                            $mediaUrl = $media
+                                ? asset('storage/' . $media->media_path)
                                 : asset('images/placeholder.webp');
+                            $mediaType = $media && strpos($media->media_path, '.mp4') !== false ? 'video' : 'image';
                             $roomName = $post->room ? e($post->room->name) : 'No Room';
                             // Sanitize username for URL
                             $username = Str::slug($post->user->mention ?? 'anonymous');
@@ -157,7 +177,8 @@
                                 [
                                     'x' => $coords['x'] + $xOffset,
                                     'y' => $coords['y'] + $yOffset,
-                                    'image' => $imageUrl,
+                                    'media' => $mediaUrl,
+                                    'mediaType' => $mediaType,
                                     'room' => $roomName,
                                     'url' => $postUrl,
                                 ],
@@ -185,7 +206,7 @@
 <div id="previewPopup" class="hidden fixed bg-white rounded-lg shadow-lg p-2 z-[60]" role="dialog"
     aria-label="Post Preview">
     <a id="previewLink" href="#" class="block text-decoration-none text-inherit">
-        <img id="previewImage" src="" alt="Post preview image" class="w-24 h-24 object-cover rounded">
+        <div id="previewMedia" class="w-32 h-32 object-cover rounded"></div>
         <p id="previewRoom" class="text-center text-sm font-medium mt-1"></p>
     </a>
 </div>
@@ -206,7 +227,7 @@
     }
 
     #previewPopup {
-        width: 150px;
+        width: 145px;
         text-align: center;
         pointer-events: auto;
         z-index: 60;
@@ -218,6 +239,14 @@
         display: block;
         text-decoration: none;
         color: inherit;
+    }
+
+    #previewMedia video,
+    #previewMedia img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        border-radius: 0.25rem;
     }
 
     [role="button"] {
@@ -245,9 +274,10 @@
 
     function openPreviewPopup(data) {
         const previewPopup = document.getElementById("previewPopup");
-        const popupWidth = 150; // Width of the popup
-        const popupHeight = 140; // Height of the popup
-        const marginRight = 20; // Margin from the right edge of the screen
+        const previewMedia = document.getElementById("previewMedia");
+        const popupWidth = 200;
+        const popupHeight = 180;
+        const marginRight = 20;
 
         // Position the popup on the right side, centered vertically
         const screenX = window.innerWidth - popupWidth - marginRight;
@@ -257,17 +287,45 @@
         previewPopup.style.top = `${screenY}px`;
         previewPopup.classList.remove("hidden");
 
+        // Clear previous media content
+        previewMedia.innerHTML = '';
+
+        // Create media element based on mediaType
+        if (data.mediaType === 'video') {
+            const video = document.createElement('video');
+            video.src = data.media;
+            video.controls = true;
+            video.autoplay = false;
+            video.muted = true; // Muted to avoid autoplay issues
+            video.className = 'w-full h-full object-cover rounded';
+            video.onerror = () => {
+                const img = document.createElement('img');
+                img.src = '{{ asset('images/placeholder.png') }}';
+                img.alt = 'Placeholder image';
+                img.className = 'w-full h-full object-cover rounded';
+                previewMedia.innerHTML = '';
+                previewMedia.appendChild(img);
+            };
+            previewMedia.appendChild(video);
+        } else {
+            const img = document.createElement('img');
+            img.src = data.media;
+            img.alt = 'Post preview image';
+            img.className = 'w-full h-full object-cover rounded';
+            img.onerror = () => {
+                img.src = '{{ asset('images/placeholder.png') }}';
+            };
+            previewMedia.appendChild(img);
+        }
+
         const previewLink = document.getElementById("previewLink");
         previewLink.href = data.url;
-        document.getElementById("previewImage").src = data.image;
-        document.getElementById("previewImage").onerror = () => {
-            this.src = '{{ asset('images/placeholder.png') }}';
-        };
         document.getElementById("previewRoom").textContent = data.room;
     }
 
     function closePreviewPopup() {
         document.getElementById("previewPopup").classList.add("hidden");
+        document.getElementById("previewMedia").innerHTML = '';
     }
 
     // Close preview when clicking outside
@@ -300,9 +358,9 @@
     window.addEventListener('resize', function() {
         const previewPopup = document.getElementById("previewPopup");
         if (!previewPopup.classList.contains("hidden")) {
-            const popupWidth = 150;
-            const popupHeight = 140;
-            const marginRight = 20;
+            const popupWidth = 200;
+            const popupHeight = 180;
+            const marginRight = 40;
             previewPopup.style.left = `${window.innerWidth - popupWidth - marginRight}px`;
             previewPopup.style.top = `${(window.innerHeight - popupHeight) / 2}px`;
         }

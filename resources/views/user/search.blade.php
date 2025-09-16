@@ -218,6 +218,23 @@
                             {{ $user->name }}
                         </a>
                         <p class="text-sm text-gray-500">{{ '@' . $user->mention }}</p>
+                        <div class="mt-2 text-sm text-gray-500">
+                            @if ($user->profile_visibility['dob'] ?? false)
+                                <p>Ngày sinh: {{ $user->dob?->format('d/m/Y') }}</p>
+                            @endif
+                            @if ($user->profile_visibility['class'] ?? false)
+                                <p>Lớp: {{ $user->class }}</p>
+                            @endif
+                            @if ($user->profile_visibility['major'] ?? false)
+                                <p>Ngành: {{ $user->major }}</p>
+                            @endif
+                            @if ($user->profile_visibility['course'] ?? false)
+                                <p>Khóa: {{ $user->course }}</p>
+                            @endif
+                            @if ($user->profile_visibility['student_id'] ?? false)
+                                <p>MSSV: {{ $user->student_id }}</p>
+                            @endif
+                        </div>
                     </div>
                 </div>
             @empty

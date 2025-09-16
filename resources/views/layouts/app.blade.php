@@ -172,6 +172,7 @@
         <!-- Minimap Area -->
         <div class="w-1/4 bg-gray-200 fixed top-0 right-0 h-screen overflow-y-auto">
             @include('layouts.minimap')
+            @include('layouts._suggest')
         </div>
     </div>
 

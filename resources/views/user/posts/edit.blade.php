@@ -45,6 +45,30 @@
                     @enderror
                 </div>
 
+                {{-- Address --}}
+                <div class="mb-4">
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Địa điểm</label>
+                    <select name="room_id"
+                        class="w-full p-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-600">
+                        <option value="">-- Chọn Phòng --</option>
+                        @foreach ($buildings as $building)
+                            <optgroup label="{{ $building->name }}">
+                                @foreach ($building->floors as $floor)
+                                    @foreach ($floor->rooms as $room)
+                                        <option value="{{ $room->id }}"
+                                            {{ old('room_id', $post->room_id) == $room->id ? 'selected' : '' }}>
+                                            {{ $floor->name ?? 'Tầng ' . $floor->floor_number }} - {{ $room->name ?? $room->room_number }}
+                                        </option>
+                                    @endforeach
+                                @endforeach
+                            </optgroup>
+                        @endforeach
+                    </select>
+                    @error('room_id')
+                        <p class="text-sm text-red-600 mt-1">{{ $message }}</p>
+                    @enderror
+                </div>
+
                 {{-- Current Media + Add New Media --}}
                 <div class="mb-4">
                     <label class="block text-sm font-semibold text-gray-700 mb-2">Media</label>

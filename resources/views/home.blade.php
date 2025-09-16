@@ -227,7 +227,7 @@
                             </div>
                         @endif
                     </div>
-
+                    <hr>
                     <!-- Content -->
                     <p class="mt-3 text-sm text-gray-800 line-clamp-3">{!! nl2br(e($post->content)) !!}</p>
 

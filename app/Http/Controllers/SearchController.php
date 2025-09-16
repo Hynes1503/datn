@@ -16,9 +16,25 @@ class SearchController extends Controller
         $posts = collect();
 
         if ($query) {
-            // Tìm kiếm người dùng
+            // Field luôn hiển thị
             $users = User::where('name', 'like', "%{$query}%")
-                ->orWhere('mention', 'like', "%{$query}%")
+                ->orWhere(function ($q) use ($query) {
+                    $optionalFields = [
+                        'mention',
+                        'dob',
+                        'class',
+                        'major',
+                        'course',
+                        'student_id',
+                    ];
+
+                    foreach ($optionalFields as $field) {
+                        $q->orWhere(function ($sub) use ($field, $query) {
+                            $sub->where($field, 'like', "%{$query}%")
+                                ->whereRaw("JSON_EXTRACT(profile_visibility, '$.\"$field\"') IN ('1', true)");
+                        });
+                    }
+                })
                 ->take(10)
                 ->get();
 
@@ -33,6 +49,7 @@ class SearchController extends Controller
 
         return view('user.search', compact('query', 'users', 'posts'));
     }
+
 
     public function suggestions(Request $request)
     {

@@ -190,6 +190,13 @@
                         </div>
                     @endif
                 </div>
+                @if ($post->room)
+                    <div class="flex items-center gap-1 text-gray-600 mt-1">
+                        <i class="fa-solid fa-location-dot text-red-500"></i>
+                        <span>{{ $post->room->name }}</span>
+                    </div>
+                @endif
+                <hr>
                 {{-- Content --}}
                 <p class="mt-3 text-sm text-gray-800">{!! nl2br(e($post->content)) !!}</p>
 
@@ -674,22 +681,22 @@
                                                     <span class="text-xs text-gray-500">vừa xong</span>
                                                 </div>
                                                 ${comment.can_delete ? `
-                                                            <div class="dropdown">
-                                                                <button class="dropdown-toggle" type="button" data-comment-id="${comment.id}">
-                                                                    <i class="fa-solid fa-ellipsis-vertical"></i>
-                                                                </button>
-                                                                <div class="dropdown-menu" id="dropdown-menu-comment-${comment.id}">
-                                                                    <button type="button" class="edit-comment-btn" data-comment-id="${comment.id}">Sửa</button>
-                                                                    <form action="/@${comment.user.mention}/posts/${comment.post_id}/comments/${comment.id}"
-                                                                          method="POST" class="inline comment-delete-form">
-                                                                        <input type="hidden" name="_token" value="{{ csrf_token() }}">
-                                                                        <input type="hidden" name="_method" value="DELETE">
-                                                                        <button type="submit" class="text-red-500"
-                                                                                onclick="return confirm('Bạn có chắc chắn muốn xóa ${isReply ? 'phản hồi' : 'bình luận'} này?');">Xóa</button>
-                                                                    </form>
+                                                                <div class="dropdown">
+                                                                    <button class="dropdown-toggle" type="button" data-comment-id="${comment.id}">
+                                                                        <i class="fa-solid fa-ellipsis-vertical"></i>
+                                                                    </button>
+                                                                    <div class="dropdown-menu" id="dropdown-menu-comment-${comment.id}">
+                                                                        <button type="button" class="edit-comment-btn" data-comment-id="${comment.id}">Sửa</button>
+                                                                        <form action="/@${comment.user.mention}/posts/${comment.post_id}/comments/${comment.id}"
+                                                                              method="POST" class="inline comment-delete-form">
+                                                                            <input type="hidden" name="_token" value="{{ csrf_token() }}">
+                                                                            <input type="hidden" name="_method" value="DELETE">
+                                                                            <button type="submit" class="text-red-500"
+                                                                                    onclick="return confirm('Bạn có chắc chắn muốn xóa ${isReply ? 'phản hồi' : 'bình luận'} này?');">Xóa</button>
+                                                                        </form>
+                                                                    </div>
                                                                 </div>
-                                                            </div>
-                                                        ` : ''}
+                                                            ` : ''}
                                             </div>
                                             <p class="text-${isReply ? 'xs' : 'sm'} text-gray-800 mt-1 comment-text">${comment.content.replace(/\n/g, '<br>')}</p>
                                         </div>
