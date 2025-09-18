@@ -15,6 +15,8 @@ use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\SearchController;
 use App\Http\Controllers\LocationController;
 use App\Http\Controllers\Admin\RoomController;
+use App\Http\Controllers\Admin\UserController as AdminUserController;
+use App\Http\Controllers\Admin\PostController as AdminPostController;
 // Route gốc trả về trang login
 Route::get('/', function () {
     return view('auth.login');
@@ -25,6 +27,7 @@ Route::prefix('admin')->group(function () {
     // Login không qua middleware
     Route::get('/login', [AdminController::class, 'showLoginForm'])->name('admin.login');
     Route::post('/login', [AdminController::class, 'login'])->name('admin.login.submit');
+    Route::get('/dashboard/chart-data', [AdminController::class, 'chartData'])->name('admin.dashboard.chart');
     Route::get('/buildings/create', [RoomController::class, 'createBuilding'])->name('admin.buildings.create');
     Route::post('/buildings', [RoomController::class, 'storeBuilding'])->name('admin.buildings.store');
 
@@ -33,10 +36,13 @@ Route::prefix('admin')->group(function () {
     Route::get( '/get-floors/{building}', action: [RoomController::class, 'getFloors'])->name('admin.getFloors');
     Route::get('/rooms/create', [RoomController::class, 'createRoom'])->name('admin.rooms.create');
     Route::post('/rooms', [RoomController::class, 'storeRoom'])->name('admin.rooms.store');
+
     // Các route cần đăng nhập admin
     Route::middleware('auth.admin')->group(function () {
         Route::get('/', [AdminController::class, 'index'])->name('admin.dashboard');
         Route::post('/logout', [AdminController::class, 'logout'])->name('admin.logout');
+        Route::resource('users', AdminUserController::class, ['as' => 'admin']);
+        Route::resource('posts', AdminPostController::class, ['as' => 'admin']);
     });
 });
 

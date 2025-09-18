@@ -88,4 +88,5 @@ class User extends Authenticatable
     {
         return $this->belongsToMany(Post::class, 'likes', 'user_id', 'post_id')->withTimestamps();
     }
+    
 }

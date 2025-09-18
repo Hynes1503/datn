@@ -87,7 +87,7 @@ class OCRController extends Controller
         }
 
         // Tạo mention ngẫu nhiên từ name
-        $baseMention = Str::slug($validated['name']); // ví dụ "Phạm Văn Hiền" -> "pham-van-hien"
+        $baseMention = Str::slug($validated['name']);
         do {
             $mention = $baseMention . rand(100, 999);
         } while (User::where('mention', $mention)->exists());

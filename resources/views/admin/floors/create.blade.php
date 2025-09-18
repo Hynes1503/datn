@@ -1,4 +1,7 @@
-@extends('layouts.app')
+@extends('admin.layouts.app')
+
+@section('title', 'thêm tầng')
+@section('page-title', 'Thêm tầng tòa nhà')
 
 @section('content')
 <div class="max-w-lg mx-auto bg-white p-6 rounded shadow">
