@@ -4,135 +4,114 @@
 @section('page-title', 'Create New Post')
 
 @section('content')
-<style>
-    /* CSS for form styling */
-    .post-images {
-        display: inline-flex;
-        gap: 8px;
-        max-width: 100%;
-        overflow-x: auto;
-    }
+<div class="bg-white rounded-lg shadow p-6">
+    <form action="{{ route('admin.posts.store') }}" method="POST" enctype="multipart/form-data" class="space-y-4">
+        @csrf
 
-    .image-box {
-        flex: 0 0 auto;
-        background-color: #f3f3f3;
-        border-radius: 10px;
-        padding: 4px;
-    }
+        {{-- Title --}}
+        <div>
+            <label class="block mb-1 font-medium">Title</label>
+            <input type="text" name="title" id="title" value="{{ old('title') }}" 
+                   class="w-full border rounded p-2" required>
+            @error('title')
+                <div class="text-red-500 text-sm">{{ $message }}</div>
+            @enderror
+        </div>
 
-    .post-image {
-        border: 1px solid rgba(0, 0, 0, 0.2);
-        border-radius: 8px;
-        max-height: 150px;
-        object-fit: cover;
-    }
+        {{-- Content --}}
+        <div>
+            <label class="block mb-1 font-medium">Content</label>
+            <textarea name="content" id="content" rows="5" 
+                      class="w-full border rounded p-2">{{ old('content') }}</textarea>
+            @error('content')
+                <div class="text-red-500 text-sm">{{ $message }}</div>
+            @enderror
+        </div>
 
-    .post-video {
-        border: 1px solid rgba(0, 0, 0, 0.2);
-        border-radius: 8px;
-        max-height: 150px;
-        object-fit: cover;
-    }
-</style>
+        {{-- Hashtags --}}
+        <div>
+            <label class="block mb-1 font-medium">Hashtags (comma-separated, e.g., tag1,tag2)</label>
+            <input type="text" name="hashtag" id="hashtag" value="{{ old('hashtag') }}" 
+                   class="w-full border rounded p-2" placeholder="e.g., tag1,tag2">
+            @error('hashtag')
+                <div class="text-red-500 text-sm">{{ $message }}</div>
+            @enderror
+        </div>
 
-<div class="container mx-auto px-4 py-6">
-    <div class="flex justify-between items-center mb-6">
-        <h2 class="text-2xl font-bold text-gray-800">Create New Post</h2>
-        <a href="{{ route('admin.posts.index') }}" 
-           class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg transition duration-200">
-            <i class="fa-solid fa-arrow-left mr-1"></i> Back to Posts
-        </a>
-    </div>
-
-    <div class="bg-white shadow-md rounded-lg p-6 border-l-4 border-black">
-        <form action="{{ route('admin.posts.store') }}" method="POST" enctype="multipart/form-data">
-            @csrf
-            <div class="space-y-4">
-                <!-- Title -->
-                <div>
-                    <label for="title" class="block text-sm font-medium text-gray-700">Title</label>
-                    <input type="text" name="title" id="title" value="{{ old('title') }}" 
-                           class="mt-1 block w-full border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500" 
-                           required>
-                    @error('title')
-                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                    @enderror
-                </div>
-
-                <!-- Content -->
-                <div>
-                    <label for="content" class="block text-sm font-medium text-gray-700">Content</label>
-                    <textarea name="content" id="content" rows="5" 
-                              class="mt-1 block w-full border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500">{{ old('content') }}</textarea>
-                    @error('content')
-                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                    @enderror
-                </div>
-
-                <!-- Hashtags -->
-                <div>
-                    <label for="hashtag" class="block text-sm font-medium text-gray-700">Hashtags (comma-separated)</label>
-                    <input type="text" name="hashtag" id="hashtag" value="{{ old('hashtag') }}" 
-                           class="mt-1 block w-full border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
-                    @error('hashtag')
-                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                    @enderror
-                </div>
-
-                <!-- Room -->
-                <div>
-                    <label for="room_id" class="block text-sm font-medium text-gray-700">Room</label>
-                    <select name="room_id" id="room_id" 
-                            class="mt-1 block w-full border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
-                        <option value="">Select a room</option>
-                        @foreach ($rooms as $room)
-                            <option value="{{ $room->id }}" {{ old('room_id') == $room->id ? 'selected' : '' }}>
-                                {{ $room->name }}
-                            </option>
+        {{-- Room --}}
+        <div>
+            <label class="block mb-1 font-medium">Room</label>
+            <select name="room_id" id="room_id" class="w-full border rounded p-2">
+                <option value="">-- Select Room --</option>
+                @foreach ($buildings as $building)
+                    <optgroup label="{{ $building->name }}">
+                        @foreach ($building->floors as $floor)
+                            @foreach ($floor->rooms as $room)
+                                <option value="{{ $room->id }}" {{ old('room_id') == $room->id ? 'selected' : '' }}>
+                                    {{ $floor->name ?? 'Floor ' . $floor->floor_number }} - {{ $room->name ?? $room->room_number }}
+                                </option>
+                            @endforeach
                         @endforeach
-                    </select>
-                    @error('room_id')
-                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                    @enderror
-                </div>
+                    </optgroup>
+                @endforeach
+            </select>
+            @error('room_id')
+                <div class="text-red-500 text-sm">{{ $message }}</div>
+            @enderror
+        </div>
 
-                <!-- Building -->
-                <div>
-                    <label for="building_id" class="block text-sm font-medium text-gray-700">Building</label>
-                    <select name="building_id" id="building_id" 
-                            class="mt-1 block w-full border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
-                        <option value="">Select a building</option>
-                        @foreach ($buildings as $building)
-                            <option value="{{ $building->id }}" {{ old('building_id') == $building->id ? 'selected' : '' }}>
-                                {{ $building->name }}
-                            </option>
-                        @endforeach
-                    </select>
-                    @error('building_id')
-                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                    @enderror
-                </div>
+        {{-- Media Upload --}}
+        <div>
+            <label class="block mb-1 font-medium">Add Images or Videos</label>
+            <input type="file" name="media[]" id="media" multiple 
+                   accept="image/jpeg,image/png,image/gif,image/webp,video/mp4,video/avi,video/mov,video/webm" 
+                   class="w-full border rounded p-2">
+            <p class="mt-1 text-sm text-gray-500">Supported formats: JPG, PNG, GIF, WebP, MP4, AVI, MOV, WebM (max 50MB each)</p>
+            @error('media.*')
+                <div class="text-red-500 text-sm">{{ $message }}</div>
+            @enderror
+        </div>
 
-                <!-- Media Upload -->
-                <div>
-                    <label for="media" class="block text-sm font-medium text-gray-700">Add Media</label>
-                    <input type="file" name="media[]" id="media" multiple 
-                           accept="image/*,video/mp4" 
-                           class="mt-1 block w-full border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
-                    @error('media.*')
-                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                    @enderror
-                </div>
+        {{-- Media Preview --}}
+        <div id="media-preview" class="flex gap-2 overflow-x-auto"></div>
 
-                <!-- Submit Button -->
-                <div class="mt-6">
-                    <button type="submit" 
-                            class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition duration-200">
-                        <i class="fa-solid fa-save mr-1"></i> Create Post
-                    </button>
-                </div>
-            </div>
-        </form>
-    </div>
+        {{-- Buttons --}}
+        <div>
+            <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+                <i class="fa-solid fa-save mr-1"></i> Create Post
+            </button>
+            <a href="{{ route('admin.posts.index') }}" class="ml-2 text-gray-600 hover:underline">Cancel</a>
+        </div>
+    </form>
 </div>
+
+<script>
+    // JavaScript for media preview
+    document.getElementById('media').addEventListener('change', function(event) {
+        const preview = document.getElementById('media-preview');
+        preview.innerHTML = ''; // Clear previous previews
+        const files = event.target.files;
+
+        for (const file of files) {
+            const fileType = file.type.split('/')[0];
+            const box = document.createElement('div');
+            box.className = 'flex-shrink-0 bg-gray-100 rounded-lg p-1';
+
+            if (fileType === 'image') {
+                const img = document.createElement('img');
+                img.className = 'h-24 rounded border border-gray-300 object-cover';
+                img.src = URL.createObjectURL(file);
+                box.appendChild(img);
+            } else if (fileType === 'video') {
+                const video = document.createElement('video');
+                video.className = 'h-24 rounded border border-gray-300 object-cover';
+                video.src = URL.createObjectURL(file);
+                video.controls = true;
+                box.appendChild(video);
+            }
+
+            preview.appendChild(box);
+        }
+    });
+</script>
 @endsection

@@ -154,19 +154,26 @@
     <article class="post-article mb-6" data-id="{{ $post->id }}">
         <div class="flex items-start gap-4">
             {{-- Avatar --}}
-            <div class="flex-shrink-0">
+            <div class="flex-shrink-0 text-center w-20">
                 <a href="{{ route('users.show', $post->user->mention) }}">
                     <img src="{{ asset('storage/' . ($post->user->avatar ?? '')) }}" alt="{{ $post->user->name }}"
-                        class="h-20 w-20 rounded-full object-cover"
+                        class="h-20 w-20 rounded-full object-cover mx-auto"
                         onerror="this.onerror=null;this.src='{{ asset('images/default-avatar.png') }}';">
+                </a>
+                <a href="{{ route('users.show', $post->user->mention) }}" class="hover:underline">
+                    <strong class="block text-sm break-words leading-tight">
+                        {{ $post->user->name }}
+                    </strong>
                 </a>
             </div>
             <div class="flex-1">
                 <div class="flex items-center justify-between relative">
                     <div>
                         <h2 class="text-lg font-semibold">{{ $post->title }}</h2>
-                        <div class="text-sm text-gray-500">Bởi <strong>{{ $post->user->name }}</strong> ·
-                            {{ $post->created_at->diffForHumans() }}</div>
+                        <div class="text-sm text-gray-500">
+                            {{ $post->created_at->format('d/m/Y') }} ·
+                            {{ $post->created_at->diffForHumans() }}
+                        </div>
                     </div>
 
                     {{-- Options Button (visible only to post author) --}}
@@ -296,7 +303,8 @@
                 @if ($post->likes()->count() > 0)
                     <div class="mt-4">
                         <h3 class="text-sm font-semibold text-gray-700">Lượt thích ({{ $post->likes()->count() }})</h3>
-                        <p class="text-sm text-gray-600">Bài viết được thích bởi {{ $post->likes()->count() }} người.</p>
+                        <p class="text-sm text-gray-600">Bài viết được thích bởi {{ $post->likes()->count() }} người.
+                        </p>
                     </div>
                 @endif
                 <hr class="mt-5 border-t-2 border-gray-450">
@@ -325,7 +333,8 @@
                         </form>
                     @else
                         <p class="text-sm text-gray-600 mt-2">
-                            <a href="{{ route('login') }}" class="text-blue-600 hover:underline">Đăng nhập</a> để bình luận.
+                            <a href="{{ route('login') }}" class="text-blue-600 hover:underline">Đăng nhập</a> để bình
+                            luận.
                         </p>
                     @endauth
 
@@ -474,7 +483,8 @@
                                                                     </div>
                                                                 </div>
                                                             </div>
-                                                            <p class="text-red-500 text-xs mt-1 error-message hidden"></p>
+                                                            <p class="text-red-500 text-xs mt-1 error-message hidden">
+                                                            </p>
                                                         </form>
                                                     </div>
                                                 </div>
@@ -681,22 +691,22 @@
                                                     <span class="text-xs text-gray-500">vừa xong</span>
                                                 </div>
                                                 ${comment.can_delete ? `
-                                                                <div class="dropdown">
-                                                                    <button class="dropdown-toggle" type="button" data-comment-id="${comment.id}">
-                                                                        <i class="fa-solid fa-ellipsis-vertical"></i>
-                                                                    </button>
-                                                                    <div class="dropdown-menu" id="dropdown-menu-comment-${comment.id}">
-                                                                        <button type="button" class="edit-comment-btn" data-comment-id="${comment.id}">Sửa</button>
-                                                                        <form action="/@${comment.user.mention}/posts/${comment.post_id}/comments/${comment.id}"
-                                                                              method="POST" class="inline comment-delete-form">
-                                                                            <input type="hidden" name="_token" value="{{ csrf_token() }}">
-                                                                            <input type="hidden" name="_method" value="DELETE">
-                                                                            <button type="submit" class="text-red-500"
-                                                                                    onclick="return confirm('Bạn có chắc chắn muốn xóa ${isReply ? 'phản hồi' : 'bình luận'} này?');">Xóa</button>
-                                                                        </form>
-                                                                    </div>
-                                                                </div>
-                                                            ` : ''}
+                                                                                <div class="dropdown">
+                                                                                    <button class="dropdown-toggle" type="button" data-comment-id="${comment.id}">
+                                                                                        <i class="fa-solid fa-ellipsis-vertical"></i>
+                                                                                    </button>
+                                                                                    <div class="dropdown-menu" id="dropdown-menu-comment-${comment.id}">
+                                                                                        <button type="button" class="edit-comment-btn" data-comment-id="${comment.id}">Sửa</button>
+                                                                                        <form action="/@${comment.user.mention}/posts/${comment.post_id}/comments/${comment.id}"
+                                                                                              method="POST" class="inline comment-delete-form">
+                                                                                            <input type="hidden" name="_token" value="{{ csrf_token() }}">
+                                                                                            <input type="hidden" name="_method" value="DELETE">
+                                                                                            <button type="submit" class="text-red-500"
+                                                                                                    onclick="return confirm('Bạn có chắc chắn muốn xóa ${isReply ? 'phản hồi' : 'bình luận'} này?');">Xóa</button>
+                                                                                        </form>
+                                                                                    </div>
+                                                                                </div>
+                                                                            ` : ''}
                                             </div>
                                             <p class="text-${isReply ? 'xs' : 'sm'} text-gray-800 mt-1 comment-text">${comment.content.replace(/\n/g, '<br>')}</p>
                                         </div>

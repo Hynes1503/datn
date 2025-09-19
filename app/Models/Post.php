@@ -75,4 +75,8 @@ class Post extends Model
     {
         return $this->belongsTo(Building::class);
     }
+    public function reports()
+    {
+        return $this->morphMany(Report::class, 'reportable');
+    }
 }

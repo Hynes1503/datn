@@ -56,6 +56,23 @@
                 </a>
             </div>
         </div>
+
+        {{-- Bài viết --}}
+        <a href="{{ route('admin.posts.index') }}" 
+            class="flex items-center px-3 py-2 rounded-lg hover:bg-gray-100 
+                   @if(request()->routeIs('admin.posts.*')) bg-gray-100 font-semibold @endif">
+            <i class="fa-solid fa-newspaper mr-3"></i>
+            <span x-show="sidebarOpen" x-transition>Bài viết</span>
+        </a>
+
+        {{-- Người dùng --}}
+        <a href="{{ route('admin.users.index') }}" 
+            class="flex items-center px-3 py-2 rounded-lg hover:bg-gray-100 
+                   @if(request()->routeIs('admin.users.*')) bg-gray-100 font-semibold @endif">
+            <i class="fa-solid fa-users mr-3"></i>
+            <span x-show="sidebarOpen" x-transition>Người dùng</span>
+        </a>
+
     </nav>
 
     {{-- Logout --}}

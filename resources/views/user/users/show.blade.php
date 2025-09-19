@@ -135,15 +135,15 @@
 
         /* Follow/Unfollow button styles */
         /* .follow-btn {
-            padding: 8px 16px;
-            border: 1px solid #e5e7eb;
-            border-radius: 9999px;
-            font-size: 0.875rem;
-            transition: all 0.2s ease;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        } */
+                            padding: 8px 16px;
+                            border: 1px solid #e5e7eb;
+                            border-radius: 9999px;
+                            font-size: 0.875rem;
+                            transition: all 0.2s ease;
+                            display: flex;
+                            align-items: center;
+                            gap: 8px;
+                        } */
 
         .follow-btn.followed {
             background-color: #000000;
@@ -200,7 +200,7 @@
             background-color: #000 !important;
         }
     </style>
-
+    @include('layouts._reportform')
     <header class="mb-6 bg-white rounded-2xl shadow-sm p-6 flex items-center gap-6">
         <img src="{{ $user->avatar_url }}" alt="{{ $user->name }}" class="h-20 w-20 rounded-full object-cover">
         <div class="flex-1">
@@ -213,26 +213,32 @@
                         </span>
                     </h5>
                 </div>
-                <div class="flex items-center gap-4">
+                <div class="flex items-center gap-2">
                     @if (auth()->check() && auth()->id() === $user->id)
-                        <div>
-                            <a href="{{ route('users.edit', $user) }}"
-                                class="p-3 border border-gray-300 rounded-full text-gray-700 hover:bg-gray-100 transition text-xl">
-                                <i class="fa-solid fa-user-pen"></i>
-                            </a>
-                        </div>
+                        {{-- Nút Edit --}}
+                        <a href="{{ route('users.edit', $user) }}"
+                            class="p-2 border border-gray-300 rounded-full text-gray-700 hover:bg-gray-100 transition text-lg">
+                            <i class="fa-solid fa-user-pen"></i>
+                        </a>
                     @elseif (auth()->check())
+                        {{-- Nút Follow / Unfollow --}}
                         <form
                             action="{{ auth()->user()->isFollowing($user) ? route('unfollow', $user) : route('follow', $user) }}"
                             method="POST">
                             @csrf
                             <button type="submit"
-                                class="follow-btn {{ auth()->user()->isFollowing($user) ? 'followed' : '' }} p-3 border border-gray-300 rounded-full text-gray-700 hover:bg-gray-100 transition text-xl">
+                                class="follow-btn {{ auth()->user()->isFollowing($user) ? 'followed' : '' }} 
+                       p-2 border border-gray-300 rounded-full text-gray-700 hover:bg-gray-100 transition text-lg">
                                 <i
                                     class="fa-solid {{ auth()->user()->isFollowing($user) ? 'fa-user-minus' : 'fa-user-plus' }}"></i>
-                                {{-- {{ auth()->user()->isFollowing($user) ? 'Unfollow' : 'Follow' }} --}}
                             </button>
                         </form>
+
+                        {{-- Nút Report --}}
+                        <button type="button" onclick="openReportModal('user', {{ $user->id }})"
+                            class="p-2 border border-gray-300 rounded-full text-black hover:bg-gray-200 transition text-lg">
+                            <i class="fa-solid fa-person-circle-exclamation"></i>
+                        </button>
                     @endif
                 </div>
             </div>
@@ -267,9 +273,17 @@
         @foreach ($user->posts as $post)
             <article class="mb-6 bg-white rounded-2xl shadow-sm p-4 post-article" data-id="{{ $post->id }}">
                 <div class="flex items-start gap-4">
-                    <div class="flex-shrink-0">
-                        <img src="{{ $user->avatar_url }}" alt="{{ $post->user->name }}"
-                            class="h-12 w-12 rounded-full object-cover">
+                    <div class="flex-shrink-0 text-center w-20">
+                        <a href="{{ route('users.show', $post->user->mention) }}">
+                            <img src="{{ asset('storage/' . ($post->user->avatar ?? '')) }}" alt="{{ $post->user->name }}"
+                                class="h-20 w-20 rounded-full object-cover mx-auto"
+                                onerror="this.onerror=null;this.src='{{ asset('images/default-avatar.png') }}';">
+                        </a>
+                        <a href="{{ route('users.show', $post->user->mention) }}" class="hover:underline">
+                            <strong class="block text-sm break-words leading-tight">
+                                {{ $post->user->name }}
+                            </strong>
+                        </a>
                     </div>
                     <div class="flex-1">
                         <div class="flex items-center justify-between">
@@ -279,7 +293,6 @@
                                     <h2 class="text-lg font-semibold">{{ $post->title }}</h2>
                                 </a>
                                 <div class="text-sm text-gray-500">
-                                    Bởi <strong>{{ $post->user->name }}</strong>
                                     <div>
                                         {{ $post->created_at->format('d/m/Y') }} ·
                                         {{ $post->created_at->diffForHumans() }}

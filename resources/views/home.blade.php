@@ -155,7 +155,7 @@
             }
         }
     </style>
-
+    @include('layouts._reportform')
     @if (auth()->check())
         <a href="{{ route('posts.create') }}" id="openPostModal" class="post-creation-form text-gray-400 text-base">
             <img src="{{ asset('storage/' . (Auth::user()->avatar ?? '')) }}" alt="{{ Auth::user()->name }}"
@@ -180,7 +180,6 @@
                             {{ $post->user->name }}
                         </strong>
                     </a>
-
                 </div>
 
 
@@ -209,12 +208,13 @@
                         </div>
 
                         <!-- Dropdown for edit/delete options -->
-                        @if (auth()->check() && auth()->user()->id === $post->user_id)
-                            <div class="dropdown">
-                                <button class="dropdown-toggle" type="button" data-post-id="{{ $post->id }}">
-                                    <i class="fa-solid fa-ellipsis-vertical"></i>
-                                </button>
-                                <div class="dropdown-menu" id="dropdown-menu-{{ $post->id }}">
+                        <div class="dropdown">
+                            <button class="dropdown-toggle" type="button" data-post-id="{{ $post->id }}">
+                                <i class="fa-solid fa-ellipsis-vertical"></i>
+                            </button>
+                            <div class="dropdown-menu" id="dropdown-menu-{{ $post->id }}">
+                                @if (auth()->check() && auth()->user()->id === $post->user_id)
+                                    {{-- Chủ sở hữu --}}
                                     <a href="{{ route('posts.edit', [$post->user->mention, $post->slug]) }}">Sửa</a>
                                     <form action="{{ route('posts.destroy', [$post->user->mention, $post->slug]) }}"
                                         method="POST" class="delete-form">
@@ -223,9 +223,14 @@
                                         <button type="submit" class="text-red-500"
                                             onclick="return confirm('Bạn có chắc chắn muốn xóa bài viết này?');">Xóa</button>
                                     </form>
-                                </div>
+                                @else
+                                    {{-- Người khác → Report --}}
+                                    <button type="button" class="text-red-500"
+                                        onclick="openReportModal({{ $post->id }}, 'post')">Report</button>
+                                @endif
                             </div>
-                        @endif
+                        </div>
+
                     </div>
                     <hr>
                     <!-- Content -->

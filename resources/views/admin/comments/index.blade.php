@@ -1,7 +1,7 @@
 @extends('admin.layouts.app')
 
-@section('title', 'Quản lý người dùng')
-@section('page-title', 'Danh sách người dùng')
+@section('title', 'Quản lý bình luận')
+@section('page-title', 'Danh sách bình luận')
 
 @section('content')
     <style>
@@ -18,19 +18,12 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            text-decoration: none; /* Ensure no underline on links */
         }
 
         .action-icon:hover {
             color: #1f2937;
             background-color: #e5e7eb;
-        }
-
-        .create-user-icon {
-            color: #3b82f6;
-        }
-
-        .create-user-icon:hover {
-            color: #2563eb;
         }
 
         .edit-icon {
@@ -134,23 +127,108 @@
         .select2-container .select2-selection__arrow {
             height: 34px;
         }
+
+        /* Excel-like table styles */
+        .excel-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+            background-color: #fff;
+        }
+
+        .excel-table th,
+        .excel-table td {
+            border: 1px solid #d1d5db; /* Thin grid lines like Excel */
+            padding: 8px;
+            text-align: left;
+            vertical-align: middle;
+        }
+
+        .excel-table th {
+            background-color: #f4f4f5; /* Light gray header like Excel */
+            font-weight: 600;
+            color: #1f2937;
+        }
+
+        .excel-table tr:nth-child(even) {
+            background-color: #f9fafb; /* Alternating row colors */
+        }
+
+        .excel-table tr:hover {
+            background-color: #e5e7eb; /* Hover effect */
+        }
+
+        .excel-table td a {
+            color: #3b82f6;
+            text-decoration: none;
+        }
+
+        .excel-table td a:hover {
+            text-decoration: underline;
+        }
+
+        /* Fixed column widths for Excel-like appearance */
+        .excel-table th:nth-child(1),
+        .excel-table td:nth-child(1) {
+            width: 5%; /* STT */
+            text-align: center;
+        }
+
+        .excel-table th:nth-child(2),
+        .excel-table td:nth-child(2) {
+            width: 30%; /* Nội dung */
+        }
+
+        .excel-table th:nth-child(3),
+        .excel-table td:nth-child(3) {
+            width: 15%; /* Người dùng */
+        }
+
+        .excel-table th:nth-child(4),
+        .excel-table td:nth-child(4) {
+            width: 30%; /* Bài viết */
+        }
+
+        .excel-table th:nth-child(5),
+        .excel-table td:nth-child(5) {
+            width: 15%; /* Ngày tạo */
+        }
+
+        .excel-table th:nth-child(6),
+        .excel-table td:nth-child(6) {
+            width: 10%; /* Hành động */
+            min-width: 100px; /* Ensure enough space for icons */
+            text-align: center;
+        }
+
+        /* Action cell styling */
+        .action-cell {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+            min-height: 40px; /* Prevent collapse */
+        }
+
+        /* Ensure form doesn't affect layout */
+        .action-cell form {
+            display: inline-flex;
+            margin: 0;
+        }
     </style>
 
     <div class="bg-white rounded-lg shadow p-6">
         <div class="flex justify-between items-center mb-4">
-            <h2 class="text-xl font-semibold">Người dùng</h2>
+            <h2 class="text-xl font-semibold">Bình luận</h2>
             <div class="flex items-center gap-2">
-                <a href="{{ route('admin.users.create') }}" title="Thêm người dùng">
-                    <i class="fa-solid fa-plus action-icon create-user-icon"></i>
-                </a>
                 <i class="fa-solid fa-filter action-icon filter-toggle" title="Hiển thị bộ lọc"></i>
             </div>
         </div>
 
         <!-- Filter Form -->
-        <form action="{{ route('admin.users.index') }}" method="GET" class="filter-form">
+        <form action="{{ route('admin.comments.index') }}" method="GET" class="filter-form">
             <div>
-                <label for="user_id" class="block text-sm font-medium text-gray-700">Tên người dùng</label>
+                <label for="user_id" class="block text-sm font-medium text-gray-700">Người dùng</label>
                 <select name="user_id" id="user_id" class="mt-1 select2">
                     <option value="">Tất cả người dùng</option>
                     @foreach ($users as $user)
@@ -161,11 +239,14 @@
                 </select>
             </div>
             <div>
-                <label for="role" class="block text-sm font-medium text-gray-700">Vai trò</label>
-                <select name="role" id="role" class="mt-1 select2">
-                    <option value="">Tất cả vai trò</option>
-                    <option value="admin" {{ request('role') == 'admin' ? 'selected' : '' }}>Admin</option>
-                    <option value="user" {{ request('role') == 'user' ? 'selected' : '' }}>User</option>
+                <label for="post_id" class="block text-sm font-medium text-gray-700">Bài viết</label>
+                <select name="post_id" id="post_id" class="mt-1 select2">
+                    <option value="">Tất cả bài viết</option>
+                    @foreach ($posts as $post)
+                        <option value="{{ $post->id }}" {{ request('post_id') == $post->id ? 'selected' : '' }}>
+                            {{ $post->title }}
+                        </option>
+                    @endforeach
                 </select>
             </div>
             <div>
@@ -178,7 +259,7 @@
             </div>
             <div class="flex items-end gap-2">
                 <button type="submit">Lọc</button>
-                <a href="{{ route('admin.users.index') }}" class="clear-btn px-4 py-2 text-white rounded">Xóa bộ lọc</a>
+                <a href="{{ route('admin.comments.index') }}" class="clear-btn px-4 py-2 text-white rounded">Xóa bộ lọc</a>
             </div>
         </form>
         <hr>
@@ -189,37 +270,61 @@
             </div>
         @endif
 
-        <div class="divide-y">
-            @forelse($users as $user)
-                <div class="flex items-center justify-between py-3">
-                    <div class="flex items-center gap-3">
-                        <img src="{{ $user->avatar_url }}" alt="Avatar" class="w-10 h-10 rounded-full">
-                        <div>
-                            <div class="font-semibold">{{ $user->name }}</div>
-                            <div class="text-sm text-gray-500">{{ '@'.$user->mention }} | {{ $user->role }}</div>
-                        </div>
-                    </div>
-                    <div class="flex items-center gap-2">
-                        <a href="{{ route('admin.users.edit', $user) }}" title="Sửa người dùng">
-                            <i class="fa-solid fa-pencil action-icon edit-icon"></i>
-                        </a>
-                        <form action="{{ route('admin.users.destroy', $user) }}" method="POST"
-                              onsubmit="return confirm('Bạn có chắc muốn xóa người dùng này?')">
-                            @csrf
-                            @method('DELETE')
-                            <button type="submit" title="Xóa người dùng" class="action-icon delete-icon">
-                                <i class="fa-solid fa-trash"></i>
-                            </button>
-                        </form>
-                    </div>
-                </div>
-            @empty
-                <p class="text-gray-500 py-3">Chưa có người dùng nào.</p>
-            @endforelse
-        </div>
+        <table class="excel-table">
+            <thead>
+                <tr>
+                    <th>STT</th>
+                    <th>Nội dung</th>
+                    <th>Người dùng</th>
+                    <th>Bài viết</th>
+                    <th>Ngày tạo</th>
+                    <th>Hành động</th>
+                </tr>
+            </thead>
+            <tbody>
+                @forelse($comments as $index => $comment)
+                    <tr>
+                        <td>{{ $index + $comments->firstItem() }}</td>
+                        <td>{{ Str::limit($comment->content, 50) }}</td>
+                        <td>
+                            @if($comment->user)
+                                <a href="{{ route('admin.users.show', $comment->user->mention) }}" target="_blank">
+                                    {{ $comment->user->name }}
+                                </a>
+                            @else
+                                Ẩn danh
+                            @endif
+                        </td>
+                        <td>
+                            <a href="{{ route('posts.show', [$comment->post->user->mention, $comment->post->slug]) }}" target="_blank">
+                                {{ $comment->post->title }}
+                            </a>
+                        </td>
+                        <td>{{ $comment->created_at->format('d/m/Y H:i') }}</td>
+                        <td class="action-cell">
+                            <a href="{{ route('admin.comments.edit', $comment) }}" title="Sửa bình luận">
+                                <i class="fa-solid fa-pencil action-icon edit-icon"></i>
+                            </a>
+                            <form action="{{ route('admin.comments.destroy', $comment) }}" method="POST"
+                                  onsubmit="return confirm('Bạn có chắc muốn xóa bình luận này?')">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" title="Xóa bình luận" class="action-icon delete-icon">
+                                    <i class="fa-solid fa-trash"></i>
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                @empty
+                    <tr>
+                        <td colspan="6" class="text-gray-500 text-center py-3">Chưa có bình luận nào.</td>
+                    </tr>
+                @endforelse
+            </tbody>
+        </table>
 
         <div class="mt-4">
-            {{ $users->links() }}
+            {{ $comments->links() }}
         </div>
     </div>
 
@@ -231,15 +336,15 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            // Initialize Select2 for user and role dropdowns
+            // Initialize Select2 for user and post dropdowns
             $('#user_id').select2({
                 placeholder: 'Chọn người dùng',
                 allowClear: true,
                 width: '100%'
             });
 
-            $('#role').select2({
-                placeholder: 'Chọn vai trò',
+            $('#post_id').select2({
+                placeholder: 'Chọn bài viết',
                 allowClear: true,
                 width: '100%'
             });
@@ -250,9 +355,9 @@
                 $('#user_id').val(selectedUser).trigger('change');
             }
 
-            const selectedRole = "{{ request('role') }}";
-            if (selectedRole) {
-                $('#role').val(selectedRole).trigger('change');
+            const selectedPost = "{{ request('post_id') }}";
+            if (selectedPost) {
+                $('#post_id').val(selectedPost).trigger('change');
             }
 
             // Handle filter form toggle

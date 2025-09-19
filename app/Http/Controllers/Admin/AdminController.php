@@ -9,77 +9,90 @@ use App\Models\User;
 use App\Models\Post;
 use App\Models\Building;
 use Illuminate\Support\Facades\DB;
+use App\Models\Comment;
+use Carbon\Carbon;
+
 class AdminController extends Controller
 {
-public function index(Request $request)
+    public function index(Request $request)
     {
-        $type = $request->get('type', 'month'); // default = month
+        $type = $request->get('type', 'month');
 
-        // Thống kê số lượng
-        $totalUsers     = User::count();
-        $totalPosts     = Post::count();
-        $totalBuildings = Building::count();
-        $unreadNotifications = DB::table('notifications')->whereNull('read_at')->count();
+        // Thống kê cơ bản
+        $totalUsers = User::count();
+        $totalPosts = Post::count();
+        $totalComments = Comment::count();
+        $unreadNotifications = auth()->check() ? auth()->user()->unreadNotifications()->count() : 0;
 
-        // Xử lý dữ liệu thống kê bài viết
-        $labels = [];
-        $data   = [];
+        // User mới nhất
+        $latestUsers = User::latest()->take(5)->get();
 
+        /**
+         * 1. Biểu đồ Thống kê bài viết (day / month / year)
+         */
         if ($type === 'day') {
             // 7 ngày gần nhất
-            $posts = Post::selectRaw('DATE(created_at) as day, COUNT(*) as count')
-                ->where('created_at', '>=', now()->subDays(7))
-                ->groupBy('day')
-                ->orderBy('day')
-                ->pluck('count', 'day')
-                ->toArray();
-
-            foreach (range(6, 0) as $i) {
-                $date = now()->subDays($i)->toDateString();
-                $labels[] = now()->subDays($i)->format('d/m');
-                $data[]   = $posts[$date] ?? 0;
-            }
-
+            $labels = collect(range(6, 0))->map(fn($i) => Carbon::now()->subDays($i)->format('d/m'));
+            $data = $labels->map(function ($label) {
+                $date = Carbon::createFromFormat('d/m', $label)->setYear(now()->year);
+                return Post::whereDate('created_at', $date)->count();
+            });
         } elseif ($type === 'year') {
             // 5 năm gần nhất
-            $posts = Post::selectRaw('YEAR(created_at) as year, COUNT(*) as count')
-                ->where('created_at', '>=', now()->subYears(5))
-                ->groupBy('year')
-                ->orderBy('year')
-                ->pluck('count', 'year')
-                ->toArray();
-
-            foreach (range(now()->year - 4, now()->year) as $year) {
-                $labels[] = $year;
-                $data[]   = $posts[$year] ?? 0;
-            }
-
-        } else {
-            // Theo tháng (12 tháng gần nhất)
-            $posts = Post::selectRaw('MONTH(created_at) as month, COUNT(*) as count')
-                ->where('created_at', '>=', now()->subYear())
-                ->groupBy('month')
-                ->orderBy('month')
-                ->pluck('count', 'month')
-                ->toArray();
-
-            foreach (range(1, 12) as $m) {
-                $labels[] = "Th$m";
-                $data[]   = $posts[$m] ?? 0;
-            }
+            $labels = collect(range(now()->year - 5, now()->year));
+            $data = $labels->map(fn($year) => Post::whereYear('created_at', $year)->count());
+        } else { // month
+            // 12 tháng trong năm hiện tại
+            $labels = collect(range(1, 12))->map(fn($m) => "Tháng $m");
+            $data = collect(range(1, 12))->map(
+                fn($m) => Post::whereYear('created_at', now()->year)
+                    ->whereMonth('created_at', $m)
+                    ->count()
+            );
         }
 
-        $latestUsers = User::orderBy('created_at', 'desc')->take(5)->get();
+
+        /**
+         * 2. Top bài viết nhiều view
+         */
+        $topPostsQuery = Post::select('title', 'views')
+            ->orderByDesc('views')
+            ->limit(5)
+            ->get();
+
+        $topPosts = [
+            'labels' => $topPostsQuery->pluck('title'),
+            'data'   => $topPostsQuery->pluck('views'),
+        ];
+
+        /**
+         * 3. User đăng ký theo tháng (năm hiện tại)
+         */
+        $usersPerMonthQuery = User::select(
+            DB::raw('MONTH(created_at) as month'),
+            DB::raw('COUNT(*) as count')
+        )
+            ->whereYear('created_at', now()->year)
+            ->groupBy(DB::raw('MONTH(created_at)'))
+            ->orderBy(DB::raw('MONTH(created_at)'))
+            ->get();
+
+        $usersPerMonth = [
+            'labels' => $usersPerMonthQuery->pluck('month')->map(fn($m) => str_pad($m, 2, '0', STR_PAD_LEFT)),
+            'data'   => $usersPerMonthQuery->pluck('count'),
+        ];
 
         return view('admin.dashboard', compact(
             'totalUsers',
             'totalPosts',
-            'totalBuildings',
+            'totalComments',
             'unreadNotifications',
+            'latestUsers',
             'labels',
             'data',
-            'latestUsers',
-            'type'
+            'type',
+            'topPosts',
+            'usersPerMonth'
         ));
     }
 

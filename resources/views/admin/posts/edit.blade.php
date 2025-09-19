@@ -1,88 +1,136 @@
-{{-- resources/views/admin/posts/edit.blade.php --}}
 @extends('admin.layouts.app')
 
-@section('title', 'Sửa bài viết')
-@section('page-title', 'Sửa bài viết')
+@section('title', 'Edit Post')
+@section('page-title', 'Edit Post')
 
 @section('content')
-<div class="bg-white shadow rounded-lg p-6">
-    @if ($errors->any())
-        <div class="bg-red-100 text-red-700 p-3 rounded-lg mb-4">
-            <ul class="list-disc pl-5">
-                @foreach ($errors->all() as $error)
-                    <li>{{ $error }}</li>
-                @endforeach
-            </ul>
-        </div>
-    @endif
-
-    <form action="{{ route('admin.posts.update', $post) }}" method="POST" class="space-y-4">
+<div class="bg-white rounded-lg shadow p-6">
+    <form action="{{ route('admin.posts.update', $post) }}" method="POST" enctype="multipart/form-data" class="space-y-4">
         @csrf
         @method('PUT')
 
+        {{-- Title --}}
         <div>
-            <label class="block mb-1 font-semibold">Tiêu đề</label>
-            <input type="text" name="title" value="{{ old('title', $post->title) }}"
-                   class="w-full border rounded-lg p-2" required>
+            <label class="block mb-1 font-medium">Title</label>
+            <input type="text" name="title" id="title" value="{{ old('title', $post->title) }}" 
+                   class="w-full border rounded p-2" required>
+            @error('title')
+                <div class="text-red-500 text-sm">{{ $message }}</div>
+            @enderror
         </div>
 
+        {{-- Content --}}
         <div>
-            <label class="block mb-1 font-semibold">Nội dung</label>
-            <textarea name="content" rows="6" class="w-full border rounded-lg p-2" required>{{ old('content', $post->content) }}</textarea>
+            <label class="block mb-1 font-medium">Content</label>
+            <textarea name="content" id="content" rows="5" 
+                      class="w-full border rounded p-2">{{ old('content', $post->content) }}</textarea>
+            @error('content')
+                <div class="text-red-500 text-sm">{{ $message }}</div>
+            @enderror
         </div>
 
+        {{-- Hashtags --}}
         <div>
-            <label class="block mb-1 font-semibold">Người đăng</label>
-            <select name="user_id" class="w-full border rounded-lg p-2" required>
-                @foreach($users as $user)
-                    <option value="{{ $user->id }}" @selected(old('user_id', $post->user_id)==$user->id)>
-                        {{ $user->name }}
-                    </option>
+            <label class="block mb-1 font-medium">Hashtags (comma-separated, e.g., tag1,tag2)</label>
+            <input type="text" name="hashtag" id="hashtag" value="{{ old('hashtag', $post->hashtag) }}" 
+                   class="w-full border rounded p-2" placeholder="e.g., tag1,tag2">
+            @error('hashtag')
+                <div class="text-red-500 text-sm">{{ $message }}</div>
+            @enderror
+        </div>
+
+        {{-- Room --}}
+        <div>
+            <label class="block mb-1 font-medium">Room</label>
+            <select name="room_id" id="room_id" class="w-full border rounded p-2">
+                <option value="">-- Select Room --</option>
+                @foreach ($buildings as $building)
+                    <optgroup label="{{ $building->name }}">
+                        @foreach ($building->floors as $floor)
+                            @foreach ($floor->rooms as $room)
+                                <option value="{{ $room->id }}" {{ old('room_id', $post->room_id) == $room->id ? 'selected' : '' }}>
+                                    {{ $floor->name ?? 'Floor ' . $floor->floor_number }} - {{ $room->name ?? $room->room_number }}
+                                </option>
+                            @endforeach
+                        @endforeach
+                    </optgroup>
                 @endforeach
             </select>
+            @error('room_id')
+                <div class="text-red-500 text-sm">{{ $message }}</div>
+            @enderror
         </div>
 
-        <div class="grid grid-cols-2 gap-4">
-            <div>
-                <label class="block mb-1 font-semibold">Tòa nhà</label>
-                <select name="building_id" class="w-full border rounded-lg p-2">
-                    <option value="">-- Không chọn --</option>
-                    @foreach($buildings as $building)
-                        <option value="{{ $building->id }}" @selected(old('building_id', $post->building_id)==$building->id)>
-                            {{ $building->name }}
-                        </option>
-                    @endforeach
-                </select>
-            </div>
-
-            <div>
-                <label class="block mb-1 font-semibold">Phòng</label>
-                <select name="room_id" class="w-full border rounded-lg p-2">
-                    <option value="">-- Không chọn --</option>
-                    @foreach($rooms as $room)
-                        <option value="{{ $room->id }}" @selected(old('room_id', $post->room_id)==$room->id)>
-                            {{ $room->name }}
-                        </option>
-                    @endforeach
-                </select>
-            </div>
-        </div>
-
+        {{-- Existing Media --}}
         <div>
-            <label class="block mb-1 font-semibold">Hashtag</label>
-            <input type="text" name="hashtag" value="{{ old('hashtag', $post->hashtag) }}"
-                   class="w-full border rounded-lg p-2">
+            <label class="block mb-1 font-medium">Current Media</label>
+            <div class="flex gap-2 overflow-x-auto">
+                @foreach ($post->media as $media)
+                    <div class="flex-shrink-0 bg-gray-100 rounded-lg p-1">
+                        @if ($media->media_type === 'image')
+                            <img src="{{ Storage::url($media->media_path) }}" class="h-24 rounded border border-gray-300 object-cover">
+                        @elseif ($media->media_type === 'video')
+                            <video class="h-24 rounded border border-gray-300 object-cover" controls>
+                                <source src="{{ Storage::url($media->media_path) }}">
+                            </video>
+                        @endif
+                    </div>
+                @endforeach
+            </div>
         </div>
 
-        <div class="flex items-center space-x-2">
-            <button type="submit"
-                    class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
-                Cập nhật
+        {{-- Media Upload --}}
+        <div>
+            <label class="block mb-1 font-medium">Add New Images or Videos</label>
+            <input type="file" name="media[]" id="media" multiple 
+                   accept="image/jpeg,image/png,image/gif,image/webp,video/mp4,video/avi,video/mov,video/webm" 
+                   class="w-full border rounded p-2">
+            <p class="mt-1 text-sm text-gray-500">Supported formats: JPG, PNG, GIF, WebP, MP4, AVI, MOV, WebM (max 50MB each). Uploading new media will replace existing media.</p>
+            @error('media.*')
+                <div class="text-red-500 text-sm">{{ $message }}</div>
+            @enderror
+        </div>
+
+        {{-- Media Preview --}}
+        <div id="media-preview" class="flex gap-2 overflow-x-auto"></div>
+
+        {{-- Buttons --}}
+        <div>
+            <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+                <i class="fa-solid fa-save mr-1"></i> Update Post
             </button>
-            <a href="{{ route('admin.posts.index') }}" class="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300">
-                Hủy
-            </a>
+            <a href="{{ route('admin.posts.index') }}" class="ml-2 text-gray-600 hover:underline">Cancel</a>
         </div>
     </form>
 </div>
+
+<script>
+    // JavaScript for media preview
+    document.getElementById('media').addEventListener('change', function(event) {
+        const preview = document.getElementById('media-preview');
+        preview.innerHTML = ''; // Clear previous previews
+        const files = event.target.files;
+
+        for (const file of files) {
+            const fileType = file.type.split('/')[0];
+            const box = document.createElement('div');
+            box.className = 'flex-shrink-0 bg-gray-100 rounded-lg p-1';
+
+            if (fileType === 'image') {
+                const img = document.createElement('img');
+                img.className = 'h-24 rounded border border-gray-300 object-cover';
+                img.src = URL.createObjectURL(file);
+                box.appendChild(img);
+            } else if (fileType === 'video') {
+                const video = document.createElement('video');
+                video.className = 'h-24 rounded border border-gray-300 object-cover';
+                video.src = URL.createObjectURL(file);
+                video.controls = true;
+                box.appendChild(video);
+            }
+
+            preview.appendChild(box);
+        }
+    });
+</script>
 @endsection

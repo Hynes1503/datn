@@ -17,6 +17,8 @@ use App\Http\Controllers\LocationController;
 use App\Http\Controllers\Admin\RoomController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\Admin\PostController as AdminPostController;
+use App\Http\Controllers\Admin\CommentController as AdminCommentController;
+use App\Http\Controllers\ReportController;
 // Route gốc trả về trang login
 Route::get('/', function () {
     return view('auth.login');
@@ -33,7 +35,7 @@ Route::prefix('admin')->group(function () {
 
     Route::get('/floors/create', [RoomController::class, 'createFloor'])->name('admin.floors.create');
     Route::post('/floors', [RoomController::class, 'storeFloor'])->name('admin.floors.store');
-    Route::get( '/get-floors/{building}', action: [RoomController::class, 'getFloors'])->name('admin.getFloors');
+    Route::get('/get-floors/{building}', action: [RoomController::class, 'getFloors'])->name('admin.getFloors');
     Route::get('/rooms/create', [RoomController::class, 'createRoom'])->name('admin.rooms.create');
     Route::post('/rooms', [RoomController::class, 'storeRoom'])->name('admin.rooms.store');
 
@@ -43,6 +45,8 @@ Route::prefix('admin')->group(function () {
         Route::post('/logout', [AdminController::class, 'logout'])->name('admin.logout');
         Route::resource('users', AdminUserController::class, ['as' => 'admin']);
         Route::resource('posts', AdminPostController::class, ['as' => 'admin']);
+        Route::resource('comments', AdminCommentController::class, ['as' => 'admin']);
+        Route::resource('/reports', ReportController::class)->except(['store']);
     });
 });
 
@@ -76,7 +80,7 @@ Route::middleware('auth.custom')->group(function () {
 Route::get('/search', action: [SearchController::class, 'index'])->name('search');
 // routes/web.php
 Route::get('/search/suggestions', [SearchController::class, 'suggestions'])->name('search.suggestions');
-
+Route::resource('/reports', ReportController::class)->only('store');
 // ================= USERS =================
 Route::prefix('{user:mention}')->group(function () {
     Route::get('/', [UserController::class, 'show'])->name('users.show');

@@ -22,7 +22,7 @@
     <div class="bg-white rounded-lg shadow-md overflow-hidden" onclick="openMapPopup()" role="button" tabindex="0"
         aria-label="Open campus map">
         <div class="px-4 py-3 border-b border-gray-200">
-            <h2 class="text-base font-semibold text-gray-800">Bản đồ EPU</h2>
+            <h2 class="text-base font-semibold text-gray-800">Bản đồ EPU - Cơ sở 1</h2>
         </div>
         <img src="{{ asset('images/minmap.png') }}" alt="Mini map of Faculty of Electronics and Telecommunications"
             class="w-full">
