@@ -150,7 +150,7 @@
             display: none;
         }
     </style>
-
+    @include('layouts._reportform')
     <article class="post-article mb-6" data-id="{{ $post->id }}">
         <div class="flex items-start gap-4">
             {{-- Avatar --}}
@@ -178,24 +178,45 @@
 
                     {{-- Options Button (visible only to post author) --}}
                     @if (auth()->check() && auth()->user()->id === $post->user->id)
-                        <div class="dropdown">
+                        {{-- Dropdown cho chủ sở hữu (Edit + Delete) --}}
+                        <div class="dropdown relative">
                             <button class="dropdown-toggle" type="button" data-post-id="{{ $post->id }}">
                                 <i class="fa-solid fa-ellipsis-vertical"></i>
                             </button>
-                            <div class="dropdown-menu" id="dropdown-menu-{{ $post->id }}">
-                                <a
-                                    href="{{ route('posts.edit', ['user' => $post->user->mention, 'post' => $post->slug]) }}">Sửa</a>
+                            <div class="dropdown-menu absolute right-0 mt-2 w-32 bg-white border rounded shadow-lg hidden z-50"
+                                id="dropdown-menu-{{ $post->id }}">
+                                <a href="{{ route('posts.edit', ['user' => $post->user->mention, 'post' => $post->slug]) }}"
+                                    class="block px-4 py-2 text-sm hover:bg-gray-100">Sửa</a>
+
                                 <form
                                     action="{{ route('posts.destroy', ['user' => $post->user->mention, 'post' => $post->slug]) }}"
                                     method="POST" class="delete-form">
                                     @csrf
                                     @method('DELETE')
-                                    <button type="submit" class="text-red-500"
-                                        onclick="return confirm('Bạn có chắc chắn muốn xóa bài viết này?');">Xóa</button>
+                                    <button type="submit"
+                                        class="w-full text-left block px-4 py-2 text-sm text-red-500 hover:bg-gray-100"
+                                        onclick="return confirm('Bạn có chắc chắn muốn xóa bài viết này?');">
+                                        Xóa
+                                    </button>
                                 </form>
                             </div>
                         </div>
+                    @elseif(auth()->check())
+                        {{-- Dropdown cho người khác (Report) --}}
+                        <div class="dropdown relative">
+                            <button class="dropdown-toggle" type="button" data-post-id="{{ $post->id }}">
+                                <i class="fa-solid fa-ellipsis-vertical"></i>
+                            </button>
+                            <div class="dropdown-menu absolute right-0 mt-2 w-32 bg-white border rounded shadow-lg hidden z-50"
+                                id="dropdown-menu-{{ $post->id }}">
+                                <button type="button" onclick="openReportModal('post', {{ $post->id }})"
+                                    class="w-full text-left block px-4 py-2 text-sm text-black hover:bg-gray-100">
+                                    Báo cáo
+                                </button>
+                            </div>
+                        </div>
                     @endif
+
                 </div>
                 @if ($post->room)
                     <div class="flex items-center gap-1 text-gray-600 mt-1">
@@ -333,7 +354,7 @@
                         </form>
                     @else
                         <p class="text-sm text-gray-600 mt-2">
-                            <a href="{{ route('login') }}" class="text-blue-600 hover:underline">Đăng nhập</a> để bình
+                            <a href="{{ route('login') }}" class="text-blue-600 hover:underline">ĐRA</a> để bình
                             luận.
                         </p>
                     @endauth
@@ -354,34 +375,68 @@
                                                 <span
                                                     class="text-xs text-gray-500">{{ $comment->created_at->diffForHumans() }}</span>
                                             </div>
-                                            @if (auth()->check() && (auth()->id() === $comment->user_id || auth()->user()->ownsPost($post)))
-                                                <div class="dropdown">
+
+                                            {{-- Dropdown --}}
+                                            @if (auth()->check())
+                                                <div class="dropdown relative">
                                                     <button class="dropdown-toggle" type="button"
                                                         data-comment-id="{{ $comment->id }}">
                                                         <i class="fa-solid fa-ellipsis-vertical"></i>
                                                     </button>
-                                                    <div class="dropdown-menu text-sm space-y-1"
+                                                    <div class="dropdown-menu absolute right-0 mt-2 w-36 bg-white border rounded shadow-lg hidden z-50"
                                                         id="dropdown-menu-comment-{{ $comment->id }}">
-                                                        <button type="button"
-                                                            class="edit-comment-btn px-2 py-1 rounded hover:bg-gray-100 w-full text-left"
-                                                            data-comment-id="{{ $comment->id }}">
-                                                            Sửa
-                                                        </button>
-                                                        <form
-                                                            action="{{ route('comments.destroy', ['user' => $post->user->mention, 'post' => $post->slug, 'comment' => $comment->id]) }}"
-                                                            method="POST" class="inline comment-delete-form w-full">
-                                                            @csrf
-                                                            @method('DELETE')
-                                                            <button type="submit"
-                                                                class="px-2 py-1 rounded text-red-500 hover:bg-red-50 w-full text-left"
-                                                                onclick="return confirm('Bạn có chắc chắn muốn xóa bình luận này?');">
-                                                                Xóa
+
+                                                        {{-- Nếu là chủ sở hữu comment --}}
+                                                        @if (auth()->id() === $comment->user_id)
+                                                            <button type="button"
+                                                                class="edit-comment-btn block w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
+                                                                data-comment-id="{{ $comment->id }}">
+                                                                Sửa
                                                             </button>
-                                                        </form>
+                                                            <form
+                                                                action="{{ route('comments.destroy', ['user' => $post->user->mention, 'post' => $post->slug, 'comment' => $comment->id]) }}"
+                                                                method="POST" class="inline comment-delete-form w-full">
+                                                                @csrf
+                                                                @method('DELETE')
+                                                                <button type="submit"
+                                                                    class="block w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-gray-100"
+                                                                    onclick="return confirm('Bạn có chắc chắn muốn xóa bình luận này?');">
+                                                                    Xóa
+                                                                </button>
+                                                            </form>
+
+                                                            {{-- Nếu là chủ sở hữu bài viết (và KHÔNG phải chủ sở hữu comment) --}}
+                                                        @elseif(auth()->id() === $post->user_id)
+                                                            <form
+                                                                action="{{ route('comments.destroy', ['user' => $post->user->mention, 'post' => $post->slug, 'comment' => $comment->id]) }}"
+                                                                method="POST" class="inline comment-delete-form w-full">
+                                                                @csrf
+                                                                @method('DELETE')
+                                                                <button type="submit"
+                                                                    class="block w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-gray-100"
+                                                                    onclick="return confirm('Bạn có chắc chắn muốn xóa bình luận này?');">
+                                                                    Xóa
+                                                                </button>
+                                                            </form>
+                                                            <button type="button"
+                                                                onclick="openReportModal('comment', {{ $comment->id }})"
+                                                                class="block w-full text-left px-4 py-2 text-sm text-black hover:bg-gray-100">
+                                                                Báo cáo
+                                                            </button>
+
+                                                            {{-- Người khác --}}
+                                                        @else
+                                                            <button type="button"
+                                                                onclick="openReportModal('comment', {{ $comment->id }})"
+                                                                class="block w-full text-left px-4 py-2 text-sm text-black hover:bg-gray-100">
+                                                                Báo cáo
+                                                            </button>
+                                                        @endif
                                                     </div>
                                                 </div>
                                             @endif
                                         </div>
+
                                         <p class="text-sm text-gray-800 mt-1 comment-text">{!! nl2br(e($comment->content)) !!}</p>
                                     </div>
                                     <!-- Edit Comment Form (hidden by default) -->
@@ -430,27 +485,65 @@
                                                                     <span
                                                                         class="text-xs text-gray-500">{{ $reply->created_at->diffForHumans() }}</span>
                                                                 </div>
-                                                                @if (auth()->check() && (auth()->id() === $reply->user_id || auth()->user()->ownsPost($post)))
-                                                                    <div class="dropdown">
+
+                                                                {{-- Dropdown cho reply --}}
+                                                                @if (auth()->check())
+                                                                    <div class="dropdown relative">
                                                                         <button class="dropdown-toggle" type="button"
                                                                             data-comment-id="{{ $reply->id }}">
                                                                             <i class="fa-solid fa-ellipsis-vertical"></i>
                                                                         </button>
-                                                                        <div class="dropdown-menu"
+                                                                        <div class="dropdown-menu absolute right-0 mt-2 w-36 bg-white border rounded shadow-lg hidden z-50"
                                                                             id="dropdown-menu-comment-{{ $reply->id }}">
-                                                                            <button type="button"
-                                                                                class="edit-comment-btn"
-                                                                                data-comment-id="{{ $reply->id }}">Sửa</button>
-                                                                            <form
-                                                                                action="{{ route('comments.destroy', ['user' => $post->user->mention, 'post' => $post->slug, 'comment' => $reply->id]) }}"
-                                                                                method="POST"
-                                                                                class="inline comment-delete-form">
-                                                                                @csrf
-                                                                                @method('DELETE')
-                                                                                <button type="submit"
-                                                                                    class="text-red-500"
-                                                                                    onclick="return confirm('Bạn có chắc chắn muốn xóa phản hồi này?');">Xóa</button>
-                                                                            </form>
+
+                                                                            {{-- Nếu là chủ sở hữu reply --}}
+                                                                            @if (auth()->id() === $reply->user_id)
+                                                                                <button type="button"
+                                                                                    class="edit-comment-btn block w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
+                                                                                    data-comment-id="{{ $reply->id }}">
+                                                                                    Sửa
+                                                                                </button>
+                                                                                <form
+                                                                                    action="{{ route('comments.destroy', ['user' => $post->user->mention, 'post' => $post->slug, 'comment' => $reply->id]) }}"
+                                                                                    method="POST"
+                                                                                    class="inline comment-delete-form w-full">
+                                                                                    @csrf
+                                                                                    @method('DELETE')
+                                                                                    <button type="submit"
+                                                                                        class="block w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-gray-100"
+                                                                                        onclick="return confirm('Bạn có chắc chắn muốn xóa phản hồi này?');">
+                                                                                        Xóa
+                                                                                    </button>
+                                                                                </form>
+
+                                                                                {{-- Nếu là chủ sở hữu bài viết (và KHÔNG phải chủ sở hữu reply) --}}
+                                                                            @elseif(auth()->id() === $post->user_id)
+                                                                                <form
+                                                                                    action="{{ route('comments.destroy', ['user' => $post->user->mention, 'post' => $post->slug, 'comment' => $reply->id]) }}"
+                                                                                    method="POST"
+                                                                                    class="inline comment-delete-form w-full">
+                                                                                    @csrf
+                                                                                    @method('DELETE')
+                                                                                    <button type="submit"
+                                                                                        class="block w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-gray-100"
+                                                                                        onclick="return confirm('Bạn có chắc chắn muốn xóa phản hồi này?');">
+                                                                                        Xóa
+                                                                                    </button>
+                                                                                </form>
+                                                                                <button type="button"
+                                                                                    onclick="openReportModal('comment', {{ $reply->id }})"
+                                                                                    class="block w-full text-left px-4 py-2 text-sm text-black hover:bg-gray-100">
+                                                                                    Báo cáo
+                                                                                </button>
+
+                                                                                {{-- Người khác --}}
+                                                                            @else
+                                                                                <button type="button"
+                                                                                    onclick="openReportModal('comment', {{ $reply->id }})"
+                                                                                    class="block w-full text-left px-4 py-2 text-sm text-black hover:bg-gray-100">
+                                                                                    Báo cáo
+                                                                                </button>
+                                                                            @endif
                                                                         </div>
                                                                     </div>
                                                                 @endif
@@ -691,22 +784,40 @@
                                                     <span class="text-xs text-gray-500">vừa xong</span>
                                                 </div>
                                                 ${comment.can_delete ? `
-                                                                                <div class="dropdown">
-                                                                                    <button class="dropdown-toggle" type="button" data-comment-id="${comment.id}">
-                                                                                        <i class="fa-solid fa-ellipsis-vertical"></i>
-                                                                                    </button>
-                                                                                    <div class="dropdown-menu" id="dropdown-menu-comment-${comment.id}">
-                                                                                        <button type="button" class="edit-comment-btn" data-comment-id="${comment.id}">Sửa</button>
-                                                                                        <form action="/@${comment.user.mention}/posts/${comment.post_id}/comments/${comment.id}"
-                                                                                              method="POST" class="inline comment-delete-form">
-                                                                                            <input type="hidden" name="_token" value="{{ csrf_token() }}">
-                                                                                            <input type="hidden" name="_method" value="DELETE">
-                                                                                            <button type="submit" class="text-red-500"
-                                                                                                    onclick="return confirm('Bạn có chắc chắn muốn xóa ${isReply ? 'phản hồi' : 'bình luận'} này?');">Xóa</button>
-                                                                                        </form>
-                                                                                    </div>
-                                                                                </div>
-                                                                            ` : ''}
+                                                                                                    <div class="dropdown">
+                                                                                                        <button class="dropdown-toggle" type="button" data-comment-id="${comment.id}">
+                                                                                                            <i class="fa-solid fa-ellipsis-vertical"></i>
+                                                                                                        </button>
+                                                                                                        <div class="dropdown-menu" id="dropdown-menu-comment-${comment.id}">
+                                                                                                            <button type="button" class="edit-comment-btn block w-full text-left px-4 py-2 text-sm hover:bg-gray-100" data-comment-id="${comment.id}">Sửa</button>
+                                                                                                            <form action="/@${comment.user.mention}/posts/${comment.post_id}/comments/${comment.id}"
+                                                                                                                  method="POST" class="inline comment-delete-form w-full">
+                                                                                                                <input type="hidden" name="_token" value="{{ csrf_token() }}">
+                                                                                                                <input type="hidden" name="_method" value="DELETE">
+                                                                                                                <button type="submit" class="block w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-gray-100"
+                                                                                                                        onclick="return confirm('Bạn có chắc chắn muốn xóa ${isReply ? 'phản hồi' : 'bình luận'} này?');">Xóa</button>
+                                                                                                            </form>
+                                                                                                            ${comment.can_report && !comment.can_delete ? `
+                                                                                                            <button type="button" onclick="openReportModal('comment', ${comment.id})"
+                                                                                                                    class="block w-full text-left px-4 py-2 text-sm text-black hover:bg-gray-100">Báo cáo</button>
+                                                                                                        ` : ''}
+                                                                                                            ${comment.can_delete && comment.post_owner && !comment.is_owner ? `
+                                                                                                            <button type="button" onclick="openReportModal('comment', ${comment.id})"
+                                                                                                                    class="block w-full text-left px-4 py-2 text-sm text-black hover:bg-gray-100">Báo cáo</button>
+                                                                                                        ` : ''}
+                                                                                                        </div>
+                                                                                                    </div>
+                                                                                                ` : comment.can_report ? `
+                                                                                                    <div class="dropdown">
+                                                                                                        <button class="dropdown-toggle" type="button" data-comment-id="${comment.id}">
+                                                                                                            <i class="fa-solid fa-ellipsis-vertical"></i>
+                                                                                                        </button>
+                                                                                                        <div class="dropdown-menu" id="dropdown-menu-comment-${comment.id}">
+                                                                                                            <button type="button" onclick="openReportModal('comment', ${comment.id})"
+                                                                                                                    class="block w-full text-left px-4 py-2 text-sm text-black hover:bg-gray-100">Báo cáo</button>
+                                                                                                        </div>
+                                                                                                    </div>
+                                                                                                ` : ''}
                                             </div>
                                             <p class="text-${isReply ? 'xs' : 'sm'} text-gray-800 mt-1 comment-text">${comment.content.replace(/\n/g, '<br>')}</p>
                                         </div>

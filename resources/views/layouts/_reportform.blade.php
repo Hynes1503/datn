@@ -12,7 +12,7 @@
             <!-- Lý do -->
             <div>
                 <label for="reason" class="block text-sm text-gray-600 mb-1">Lý do</label>
-                <textarea name="reason" id="reason" rows="3" required
+                <textarea name="reason" id="reason" rows="3"
                     class="w-full text-sm border rounded-lg p-2 focus:ring-1 focus:ring-black focus:border-black resize-none"></textarea>
             </div>
 

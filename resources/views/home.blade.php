@@ -5,7 +5,7 @@
 
 @section('content')
     <style>
-        /* CSS for post creation form */
+        /* CSS hiện có */
         .post-creation-form {
             background-color: #fff;
             border-radius: 16px;
@@ -24,7 +24,6 @@
             object-fit: cover;
         }
 
-        /* CSS for lazy loading posts and images */
         .post-article {
             opacity: 0;
             transform: translateY(20px);
@@ -70,7 +69,6 @@
             flex: 0 0 auto;
         }
 
-        /* CSS for dropdown menu */
         .dropdown {
             position: relative;
             display: inline-block;
@@ -128,12 +126,10 @@
             background-color: #fee2e2;
         }
 
-        /* Tim bay */
         .floating-heart {
             position: absolute;
             font-size: 1.2rem;
             color: #ef4444;
-            /* đỏ-500 */
             animation: floatUp 1s ease-out forwards;
             pointer-events: none;
         }
@@ -154,7 +150,58 @@
                 transform: translateY(-60px) scale(0.8);
             }
         }
+
+        /* Media Popup */
+        #media-popup {
+            position: fixed;
+            inset: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            display: none;
+        }
+
+        #media-popup.show {
+            display: flex;
+        }
+
+        #media-popup .popup-content {
+            position: relative;
+            background-color: #fff;
+            border-radius: 16px;
+            padding: 16px;
+            max-width: 80vw;
+            max-height: 80vh;
+            overflow: auto;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        #media-popup .popup-content img,
+        #media-popup .popup-content video {
+            max-width: 100%;
+            max-height: 70vh;
+            object-fit: contain;
+            border-radius: 8px;
+        }
+
+        #media-popup .close-popup {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: #4b5563;
+            cursor: pointer;
+        }
+
+        #media-popup .close-popup:hover {
+            color: #1f2937;
+        }
     </style>
+
     @include('layouts._reportform')
     @if (auth()->check())
         <a href="{{ route('posts.create') }}" id="openPostModal" class="post-creation-form text-gray-400 text-base">
@@ -182,7 +229,6 @@
                     </a>
                 </div>
 
-
                 <div class="flex-1">
                     <div class="flex items-center justify-between">
                         <div>
@@ -197,7 +243,6 @@
                                     {{ $post->created_at->diffForHumans() }}
                                 </div>
 
-                                {{-- Hiển thị phòng --}}
                                 @if ($post->room)
                                     <div class="flex items-center gap-1 text-gray-600 mt-1">
                                         <i class="fa-solid fa-location-dot text-red-500"></i>
@@ -214,7 +259,6 @@
                             </button>
                             <div class="dropdown-menu" id="dropdown-menu-{{ $post->id }}">
                                 @if (auth()->check() && auth()->user()->id === $post->user_id)
-                                    {{-- Chủ sở hữu --}}
                                     <a href="{{ route('posts.edit', [$post->user->mention, $post->slug]) }}">Sửa</a>
                                     <form action="{{ route('posts.destroy', [$post->user->mention, $post->slug]) }}"
                                         method="POST" class="delete-form">
@@ -224,13 +268,11 @@
                                             onclick="return confirm('Bạn có chắc chắn muốn xóa bài viết này?');">Xóa</button>
                                     </form>
                                 @else
-                                    {{-- Người khác → Report --}}
                                     <button type="button" class="text-red-500"
                                         onclick="openReportModal({{ $post->id }}, 'post')">Report</button>
                                 @endif
                             </div>
                         </div>
-
                     </div>
                     <hr>
                     <!-- Content -->
@@ -257,7 +299,7 @@
                                             <img data-src="{{ asset('storage/' . $m->media_path) }}" alt="Ảnh bài viết"
                                                 class="post-image" loading="lazy">
                                         @elseif ($m->media_type === 'video')
-                                            <video controls class="rounded-lg max-h-60">
+                                            <video controls class="post-video max-h-60">
                                                 <source src="{{ asset('storage/' . $m->media_path) }}" type="video/mp4">
                                                 Trình duyệt không hỗ trợ video.
                                             </video>
@@ -285,10 +327,19 @@
             </div>
         </article>
     @endforeach
+
+    <!-- Popup Container -->
+    <div id="media-popup">
+        <div class="popup-content">
+            <button class="close-popup">&times;</button>
+            <div id="popup-media"></div>
+        </div>
+    </div>
+
     <div class="mt-4">
         {{ $posts->links() }}
     </div>
-    {{-- @include('layouts.minimap') --}}
+
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             const articles = document.querySelectorAll('.post-article');
@@ -326,12 +377,59 @@
             articles.forEach(article => articleObserver.observe(article));
             images.forEach(image => imageObserver.observe(image));
 
+            // Handle media popup
+            const mediaElements = document.querySelectorAll('.post-image, .post-video');
+            const popup = document.getElementById('media-popup');
+            const popupMedia = document.getElementById('popup-media');
+            const closePopup = document.querySelector('.close-popup');
+
+            mediaElements.forEach(media => {
+                media.addEventListener('click', () => {
+                    popupMedia.innerHTML = '';
+                    if (media.tagName === 'IMG') {
+                        const img = document.createElement('img');
+                        img.src = media.dataset.src || media.src;
+                        img.alt = media.alt;
+                        popupMedia.appendChild(img);
+                    } else if (media.tagName === 'VIDEO') {
+                        // Pause the original video
+                        media.pause();
+                        const video = document.createElement('video');
+                        video.src = media.querySelector('source').src;
+                        video.controls = true;
+                        video.autoplay = true;
+                        popupMedia.appendChild(video);
+                    }
+                    popup.classList.add('show');
+                });
+            });
+
+            closePopup.addEventListener('click', () => {
+                // Pause video in popup (if any)
+                const popupVideo = popupMedia.querySelector('video');
+                if (popupVideo) {
+                    popupVideo.pause();
+                }
+                popup.classList.remove('show');
+            });
+
+            popup.addEventListener('click', (e) => {
+                if (e.target === popup) {
+                    // Pause video in popup (if any)
+                    const popupVideo = popupMedia.querySelector('video');
+                    if (popupVideo) {
+                        popupVideo.pause();
+                    }
+                    popup.classList.remove('show');
+                }
+            });
+
             // Like button with floating heart animation using event delegation
-            let isProcessing = false; // Prevent multiple rapid clicks
+            let isProcessing = false;
 
             document.addEventListener('submit', async function(event) {
                 const form = event.target.closest('.like-form');
-                if (!form || isProcessing) return; // Skip if not a like form or processing
+                if (!form || isProcessing) return;
                 event.preventDefault();
                 isProcessing = true;
 
@@ -344,7 +442,6 @@
                 let count = parseInt(likeCount.textContent);
                 const isLiked = likeIcon.classList.contains('fa-solid');
 
-                // Optimistic UI update
                 if (isLiked) {
                     likeIcon.classList.remove('fa-solid', 'text-red-500');
                     likeIcon.classList.add('fa-regular', 'text-gray-500');
@@ -354,7 +451,6 @@
                     likeIcon.classList.add('fa-solid', 'text-red-500');
                     likeCount.textContent = count + 1;
 
-                    // Create floating heart animation
                     const heart = document.createElement('span');
                     heart.innerHTML = '<i class="fa-solid fa-heart"></i>';
                     heart.classList.add('floating-heart');
@@ -383,13 +479,11 @@
                         throw new Error(data.error || 'Lỗi không xác định');
                     }
 
-                    // Sync with server
                     likeCount.textContent = data.likes_count;
                 } catch (error) {
                     console.error('Lỗi fetch:', error);
                     alert('Có lỗi xảy ra, vui lòng thử lại.');
 
-                    // Rollback UI on error
                     if (isLiked) {
                         likeIcon.classList.remove('fa-regular', 'text-gray-500');
                         likeIcon.classList.add('fa-solid', 'text-red-500');
@@ -400,7 +494,7 @@
                         likeCount.textContent = count;
                     }
                 } finally {
-                    isProcessing = false; // Reset processing flag
+                    isProcessing = false;
                 }
             });
 
@@ -411,7 +505,6 @@
                     const dropdownMenu = document.getElementById(`dropdown-menu-${postId}`);
                     dropdownMenu.classList.toggle('show');
 
-                    // Close other open dropdowns
                     document.querySelectorAll('.dropdown-menu.show').forEach(menu => {
                         if (menu.id !== `dropdown-menu-${postId}`) {
                             menu.classList.remove('show');

@@ -26,4 +26,20 @@ class Report extends Model
     {
         return $this->morphTo();
     }
+
+    /**
+     * Scope: chỉ lấy report đang chờ xử lý
+     */
+    public function scopePending($query)
+    {
+        return $query->where('status', 'pending');
+    }
+
+    /**
+     * Helper: đếm số report pending
+     */
+    public static function pendingCount()
+    {
+        return static::where('status', 'pending')->count();
+    }
 }

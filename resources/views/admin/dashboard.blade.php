@@ -46,15 +46,19 @@
         </a>
 
         {{-- Notification --}}
-        <div class="bg-white rounded-2xl shadow p-6 flex items-center space-x-4">
-            <div class="p-3 bg-red-100 text-red-600 rounded-xl">
-                <i class="fa-solid fa-bell text-xl"></i>
+        <a href="{{ route('reports.index') }}">
+            <div class="bg-white rounded-2xl shadow p-6 flex items-center space-x-4">
+                <div class="p-3 bg-red-100 text-red-600 rounded-xl">
+                    <i class="fa-solid fa-flag"></i>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-500">Báo cáo</p>
+                    <h3 class="text-2xl font-bold">{{ \App\Models\Report::pendingCount() }}</h3>
+                </div>
             </div>
-            <div>
-                <p class="text-sm text-gray-500">Thông báo chưa đọc</p>
-                <h3 class="text-2xl font-bold">{{ $unreadNotifications }}</h3>
-            </div>
-        </div>
+        </a>
+
+
     </div>
 
     {{-- Chart & bảng --}}

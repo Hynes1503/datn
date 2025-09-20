@@ -135,15 +135,15 @@
 
         /* Follow/Unfollow button styles */
         /* .follow-btn {
-                            padding: 8px 16px;
-                            border: 1px solid #e5e7eb;
-                            border-radius: 9999px;
-                            font-size: 0.875rem;
-                            transition: all 0.2s ease;
-                            display: flex;
-                            align-items: center;
-                            gap: 8px;
-                        } */
+                                padding: 8px 16px;
+                                border: 1px solid #e5e7eb;
+                                border-radius: 9999px;
+                                font-size: 0.875rem;
+                                transition: all 0.2s ease;
+                                display: flex;
+                                align-items: center;
+                                gap: 8px;
+                            } */
 
         .follow-btn.followed {
             background-color: #000000;
@@ -306,22 +306,44 @@
                                 </div>
                             </div>
                             @if (auth()->check() && auth()->user()->id === $post->user_id)
-                                <div class="dropdown">
+                                {{-- Chủ sở hữu: Sửa + Xóa --}}
+                                <div class="dropdown relative">
                                     <button class="dropdown-toggle" type="button" data-post-id="{{ $post->id }}">
                                         <i class="fa-solid fa-ellipsis-vertical"></i>
                                     </button>
-                                    <div class="dropdown-menu" id="dropdown-menu-{{ $post->id }}">
-                                        <a href="{{ route('posts.edit', [$post->user->mention, $post->slug]) }}">Sửa</a>
+                                    <div class="dropdown-menu absolute right-0 mt-2 w-32 bg-white border rounded shadow-lg hidden z-50"
+                                        id="dropdown-menu-{{ $post->id }}">
+                                        <a href="{{ route('posts.edit', [$post->user->mention, $post->slug]) }}"
+                                            class="block px-4 py-2 text-sm hover:bg-gray-100">Sửa</a>
+
                                         <form action="{{ route('posts.destroy', [$post->user->mention, $post->slug]) }}"
                                             method="POST" class="delete-form">
                                             @csrf
                                             @method('DELETE')
-                                            <button type="submit" class="text-red-500"
-                                                onclick="return confirm('Bạn có chắc chắn muốn xóa bài viết này?');">Xóa</button>
+                                            <button type="submit"
+                                                class="w-full text-left block px-4 py-2 text-sm text-red-500 hover:bg-gray-100"
+                                                onclick="return confirm('Bạn có chắc chắn muốn xóa bài viết này?');">
+                                                Xóa
+                                            </button>
                                         </form>
                                     </div>
                                 </div>
+                            @elseif(auth()->check())
+                                {{-- Người khác: Report --}}
+                                <div class="dropdown relative">
+                                    <button class="dropdown-toggle" type="button" data-post-id="{{ $post->id }}">
+                                        <i class="fa-solid fa-ellipsis-vertical"></i>
+                                    </button>
+                                    <div class="dropdown-menu absolute right-0 mt-2 w-32 bg-white border rounded shadow-lg hidden z-50"
+                                        id="dropdown-menu-{{ $post->id }}">
+                                        <button type="button" onclick="openReportModal('post', {{ $post->id }})"
+                                            class="w-full text-left block px-4 py-2 text-sm text-black hover:bg-gray-100">
+                                            Báo cáo
+                                        </button>
+                                    </div>
+                                </div>
                             @endif
+
                         </div>
                         <hr>
                         <p class="mt-3 text-sm text-gray-800 line-clamp-3">{!! nl2br(e($post->content)) !!}</p>
@@ -425,8 +447,8 @@
         @if (auth()->check() && auth()->id() === $user->id)
             <div class="bg-white rounded-2xl shadow-sm p-8 flex flex-col items-center justify-center text-center">
                 <div class="w-16 h-16 flex items-center justify-center rounded-full bg-gray-100 mb-4">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-gray-500" fill="none" viewBox="0 0 24 24"
-                        stroke="currentColor">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-gray-500" fill="none"
+                        viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.536L16.732 3.732z" />
                     </svg>

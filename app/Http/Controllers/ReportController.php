@@ -5,41 +5,53 @@ namespace App\Http\Controllers;
 use App\Models\Report;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+
 class ReportController extends Controller
 {
-    /**
-     * Danh sách report
-     */
     public function index(Request $request)
     {
-        $reports = Report::with(['reporter', 'reportable'])->latest()->paginate(20);
+        // Initialize query for reports
+        $query = Report::query()->with(['reporter', 'reportable']);
 
-        if ($request->wantsJson()) {
-            return response()->json($reports);
+        // Filter by status
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
         }
 
+        // Filter by reportable type
+        if ($request->filled('reportable_type')) {
+            $reportableType = $request->reportable_type;
+            $modelMap = [
+                'user' => \App\Models\User::class,
+                'post' => \App\Models\Post::class,
+                'comment' => \App\Models\Comment::class,
+            ];
+
+            if (array_key_exists($reportableType, $modelMap)) {
+                $query->where('reportable_type', $modelMap[$reportableType]);
+            }
+        }
+
+        // Filter by date range
+        if ($request->filled('date_from')) {
+            $query->whereDate('created_at', '>=', $request->date_from);
+        }
+
+        if ($request->filled('date_to')) {
+            $query->whereDate('created_at', '<=', $request->date_to);
+        }
+
+        // Order by latest and paginate
+        $reports = $query->latest()->paginate(10);
+
+        // Pass data to the view
         return view('admin.reports.index', compact('reports'));
-    }
-
-    /**
-     * Chi tiết report
-     */
-    public function show(Request $request, Report $report)
-    {
-        $report->load(['reporter', 'reportable']);
-
-        if ($request->wantsJson()) {
-            return response()->json($report);
-        }
-
-        return view('admin.reports.show', compact('report'));
     }
     public function store(Request $request)
     {
         $request->validate([
             'reportable_id' => 'required|integer',
             'reportable_type' => 'required|string|in:user,post,comment',
-            'reason' => 'required|string|max:1000',
         ]);
 
         $map = [
@@ -48,6 +60,20 @@ class ReportController extends Controller
             'comment' => \App\Models\Comment::class,
         ];
 
+        // Kiểm tra xem đã report chưa
+        $exists = Report::where('reporter_id', Auth::id())
+            ->where('reportable_id', $request->reportable_id)
+            ->where('reportable_type', $map[$request->reportable_type])
+            ->exists();
+
+        if ($exists) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Bạn đã báo cáo rồi.'
+            ]);
+        }
+
+        // Nếu chưa có thì tạo mới
         Report::create([
             'reporter_id' => Auth::id(),
             'reportable_id' => $request->reportable_id,
@@ -60,42 +86,31 @@ class ReportController extends Controller
             'message' => 'Báo cáo đã được gửi, admin sẽ xem xét sớm.'
         ]);
     }
-    /**
-     * Update trạng thái report
-     */
-    public function update(Request $request, Report $report)
+
+    public function show(Report $report)
+    {
+        // Load related data for the report
+        $report->load(['reporter', 'reportable']);
+        return view('admin.reports.show', compact('report'));
+    }
+    public function updateStatus(Request $request)
     {
         $request->validate([
+            'report_id' => 'required|exists:reports,id',
             'status' => 'required|in:pending,reviewed,resolved,rejected',
         ]);
 
+        $report = Report::findOrFail($request->report_id);
         $report->update(['status' => $request->status]);
 
-        if ($request->wantsJson()) {
-            return response()->json([
-                'success' => true,
-                'message' => 'Cập nhật trạng thái thành công!',
-                'report' => $report
-            ]);
-        }
-
-        return redirect()->back()->with('success', 'Cập nhật trạng thái thành công!');
+        return response()->json([
+            'success' => true,
+            'message' => 'Cập nhật trạng thái thành công.',
+        ]);
     }
-
-    /**
-     * Xóa report
-     */
-    public function destroy(Request $request, Report $report)
+    public function destroy(Report $report)
     {
         $report->delete();
-
-        if ($request->wantsJson()) {
-            return response()->json([
-                'success' => true,
-                'message' => 'Đã xóa report!'
-            ]);
-        }
-
-        return redirect()->route('admin.reports.index')->with('success', 'Đã xóa report!');
+        return redirect()->route('reports.index')->with('success', 'Báo cáo đã được xóa thành công.');
     }
 }

@@ -29,24 +29,25 @@ Route::prefix('admin')->group(function () {
     // Login không qua middleware
     Route::get('/login', [AdminController::class, 'showLoginForm'])->name('admin.login');
     Route::post('/login', [AdminController::class, 'login'])->name('admin.login.submit');
-    Route::get('/dashboard/chart-data', [AdminController::class, 'chartData'])->name('admin.dashboard.chart');
-    Route::get('/buildings/create', [RoomController::class, 'createBuilding'])->name('admin.buildings.create');
-    Route::post('/buildings', [RoomController::class, 'storeBuilding'])->name('admin.buildings.store');
-
-    Route::get('/floors/create', [RoomController::class, 'createFloor'])->name('admin.floors.create');
-    Route::post('/floors', [RoomController::class, 'storeFloor'])->name('admin.floors.store');
-    Route::get('/get-floors/{building}', action: [RoomController::class, 'getFloors'])->name('admin.getFloors');
-    Route::get('/rooms/create', [RoomController::class, 'createRoom'])->name('admin.rooms.create');
-    Route::post('/rooms', [RoomController::class, 'storeRoom'])->name('admin.rooms.store');
 
     // Các route cần đăng nhập admin
     Route::middleware('auth.admin')->group(function () {
         Route::get('/', [AdminController::class, 'index'])->name('admin.dashboard');
         Route::post('/logout', [AdminController::class, 'logout'])->name('admin.logout');
+        Route::get('/dashboard/chart-data', [AdminController::class, 'chartData'])->name('admin.dashboard.chart');
+        Route::get('/buildings/create', [RoomController::class, 'createBuilding'])->name('admin.buildings.create');
+        Route::post('/buildings', [RoomController::class, 'storeBuilding'])->name('admin.buildings.store');
+
+        Route::get('/floors/create', [RoomController::class, 'createFloor'])->name('admin.floors.create');
+        Route::post('/floors', [RoomController::class, 'storeFloor'])->name('admin.floors.store');
+        Route::get('/get-floors/{building}', action: [RoomController::class, 'getFloors'])->name('admin.getFloors');
+        Route::get('/rooms/create', [RoomController::class, 'createRoom'])->name('admin.rooms.create');
+        Route::post('/rooms', [RoomController::class, 'storeRoom'])->name('admin.rooms.store');
         Route::resource('users', AdminUserController::class, ['as' => 'admin']);
         Route::resource('posts', AdminPostController::class, ['as' => 'admin']);
         Route::resource('comments', AdminCommentController::class, ['as' => 'admin']);
-        Route::resource('/reports', ReportController::class)->except(['store']);
+        Route::resource('/reports', ReportController::class)->only(['index', 'show', 'destroy']);
+        Route::patch('reports/update-status', [ReportController::class, 'updateStatus'])->name('reports.updateStatus');
     });
 });
 
