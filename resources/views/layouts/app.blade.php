@@ -96,18 +96,63 @@
             position: fixed;
             top: 1rem;
             right: 1rem;
-            z-index: 100;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            max-width: 20rem;
         }
 
         .alert-box {
-            width: 20rem;
-            padding: 0.75rem 1rem;
+            padding: 1rem;
             border-radius: 0.5rem;
-            margin-bottom: 1rem;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-            transition-opacity: 0.3s;
+            margin-bottom: 0.5rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
             opacity: 1;
             position: relative;
+            transform: translateY(0);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .alert-box.fade-out {
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+
+        .alert-box.success {
+            background: #d1fae5;
+            border: 1px solid #10b981;
+            color: #065f46;
+        }
+
+        .alert-box.error {
+            background: #fee2e2;
+            border: 1px solid #ef4444;
+            color: #991b1b;
+        }
+
+        .alert-box.warning {
+            background: #fef3c7;
+            border: 1px solid #f59e0b;
+            color: #92400e;
+        }
+
+        .alert-box.info {
+            background: #dbeafe;
+            border: 1px solid #3b82f6;
+            color: #1e40af;
+        }
+
+        .close-alert {
+            font-size: 1.25rem;
+            font-weight: bold;
+            cursor: pointer;
+            background: none;
+            border: none;
+            line-height: 1;
         }
     </style>
 </head>
@@ -116,27 +161,27 @@
     <!-- Alert Container -->
     <div class="alert-container">
         @if (session('success'))
-            <div class="alert-box bg-green-100 border border-green-300 text-green-700">
+            <div class="alert-box success">
                 <span>{{ session('success') }}</span>
-                <button class="absolute right-2 top-2 text-green-700 close-alert">&times;</button>
+                <button class="close-alert">&times;</button>
             </div>
         @endif
         @if (session('error'))
-            <div class="alert-box bg-red-100 border border-red-300 text-red-700">
+            <div class="alert-box error">
                 <span>{{ session('error') }}</span>
-                <button class="absolute right-2 top-2 text-red-700 close-alert">&times;</button>
+                <button class="close-alert">&times;</button>
             </div>
         @endif
         @if (session('warning'))
-            <div class="alert-box bg-yellow-100 border border-yellow-300 text-yellow-800">
+            <div class="alert-box warning">
                 <span>{{ session('warning') }}</span>
-                <button class="absolute right-2 top-2 text-yellow-800 close-alert">&times;</button>
+                <button class="close-alert">&times;</button>
             </div>
         @endif
         @if (session('info'))
-            <div class="alert-box bg-blue-100 border border-blue-300 text-blue-700">
+            <div class="alert-box info">
                 <span>{{ session('info') }}</span>
-                <button class="absolute right-2 top-2 text-blue-700 close-alert">&times;</button>
+                <button class="close-alert">&times;</button>
             </div>
         @endif
     </div>
@@ -226,18 +271,19 @@
 
         // --- Handle auto-dismiss alerts ---
         document.querySelectorAll('.alert-box').forEach(alert => {
+            // Auto-dismiss after 3 seconds
             setTimeout(() => {
-                alert.style.opacity = '0';
+                alert.classList.add('fade-out');
                 setTimeout(() => {
                     alert.remove();
                 }, 300); // Wait for fade-out transition to complete
-            }, 2000); // Auto-dismiss after 2 seconds
+            }, 3000);
 
             // Handle manual close
             const closeButton = alert.querySelector('.close-alert');
             if (closeButton) {
                 closeButton.addEventListener('click', () => {
-                    alert.style.opacity = '0';
+                    alert.classList.add('fade-out');
                     setTimeout(() => {
                         alert.remove();
                     }, 300);

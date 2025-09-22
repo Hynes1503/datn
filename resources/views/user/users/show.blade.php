@@ -269,8 +269,8 @@
         <h2 class="text-2xl font-bold">Bài viết của {{ $user->name }}</h2>
     </header>
 
-    @if ($user->posts->count())
-        @foreach ($user->posts as $post)
+    @if ($posts->count())
+        @foreach ($posts as $post)
             <article class="mb-6 bg-white rounded-2xl shadow-sm p-4 post-article" data-id="{{ $post->id }}">
                 <div class="flex items-start gap-4">
                     <div class="flex-shrink-0 text-center w-20">

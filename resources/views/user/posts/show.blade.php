@@ -140,6 +140,15 @@
             color: #e02424;
         }
 
+        /* Additional CSS for comment icon */
+        .comment-icon {
+            transition: color 0.2s ease;
+        }
+
+        .comment-icon:hover {
+            color: #2563eb; /* Blue color to match common UI themes */
+        }
+
         /* Ensure active hashtag doesn't change on hover */
         .bg-black:hover {
             background-color: #000 !important;
@@ -311,23 +320,12 @@
                         @endauth
                     </div>
                     <div class="flex items-center gap-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
-                            stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8s-9-3.582-9-8 4.03-8 9-8 9 3.582 9 8z" />
-                        </svg>
-                        <span>{{ $post->shares ?? 0 }}</span>
+                        <i class="fa-regular fa-comment comment-icon"></i>
+                        <span>{{ $post->allcomments()->count() ?? 0 }}</span>
                     </div>
                     <div class="ml-auto text-gray-400">{{ $post->views ?? 0 }} lượt xem</div>
                 </div>
-                {{-- Likes Details --}}
-                @if ($post->likes()->count() > 0)
-                    <div class="mt-4">
-                        <h3 class="text-sm font-semibold text-gray-700">Lượt thích ({{ $post->likes()->count() }})</h3>
-                        <p class="text-sm text-gray-600">Bài viết được thích bởi {{ $post->likes()->count() }} người.
-                        </p>
-                    </div>
-                @endif
+
                 <hr class="mt-5 border-t-2 border-gray-450">
                 {{-- Comment Section --}}
                 <div class="mt-6">
@@ -354,14 +352,14 @@
                         </form>
                     @else
                         <p class="text-sm text-gray-600 mt-2">
-                            <a href="{{ route('login') }}" class="text-blue-600 hover:underline">ĐRA</a> để bình
+                            <a href="{{ route('login') }}" class="text-blue-600 hover:underline">Đăng nhập</a> để bình
                             luận.
                         </p>
                     @endauth
 
                     {{-- Comments List --}}
                     <div class="mt-6 space-y-4 comments-list">
-                        @foreach ($post->comments as $comment)
+                        @foreach ($comments as $comment)
                             <div class="flex items-start gap-3 comment border-t border-gray-200 pt-4"
                                 data-comment-id="{{ $comment->id }}">
                                 <img src="{{ $comment->user->getAvatarUrlAttribute() }}" alt="{{ $comment->user->name }}"
@@ -690,10 +688,10 @@
                         const data = await response.json();
                         if (data.success) {
                             likeCountSpan.textContent = data
-                                .likes; // Update with server-confirmed count
-                            icon.classList.toggle('fa-solid', data.is_liked);
-                            icon.classList.toggle('fa-regular', !data.is_liked);
-                            icon.classList.toggle('text-red-600', data.is_liked);
+                                .likes_count; // Update with server-confirmed count
+                            icon.classList.toggle('fa-solid', data.liked);
+                            icon.classList.toggle('fa-regular', !data.liked);
+                            icon.classList.toggle('text-red-600', data.liked);
                         } else {
                             // Revert UI on failure
                             icon.classList.toggle('fa-solid', !isLiked);
@@ -784,40 +782,40 @@
                                                     <span class="text-xs text-gray-500">vừa xong</span>
                                                 </div>
                                                 ${comment.can_delete ? `
-                                                                                                    <div class="dropdown">
-                                                                                                        <button class="dropdown-toggle" type="button" data-comment-id="${comment.id}">
-                                                                                                            <i class="fa-solid fa-ellipsis-vertical"></i>
-                                                                                                        </button>
-                                                                                                        <div class="dropdown-menu" id="dropdown-menu-comment-${comment.id}">
-                                                                                                            <button type="button" class="edit-comment-btn block w-full text-left px-4 py-2 text-sm hover:bg-gray-100" data-comment-id="${comment.id}">Sửa</button>
-                                                                                                            <form action="/@${comment.user.mention}/posts/${comment.post_id}/comments/${comment.id}"
-                                                                                                                  method="POST" class="inline comment-delete-form w-full">
-                                                                                                                <input type="hidden" name="_token" value="{{ csrf_token() }}">
-                                                                                                                <input type="hidden" name="_method" value="DELETE">
-                                                                                                                <button type="submit" class="block w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-gray-100"
-                                                                                                                        onclick="return confirm('Bạn có chắc chắn muốn xóa ${isReply ? 'phản hồi' : 'bình luận'} này?');">Xóa</button>
-                                                                                                            </form>
-                                                                                                            ${comment.can_report && !comment.can_delete ? `
+                                                                                                        <div class="dropdown">
+                                                                                                            <button class="dropdown-toggle" type="button" data-comment-id="${comment.id}">
+                                                                                                                <i class="fa-solid fa-ellipsis-vertical"></i>
+                                                                                                            </button>
+                                                                                                            <div class="dropdown-menu" id="dropdown-menu-comment-${comment.id}">
+                                                                                                                <button type="button" class="edit-comment-btn block w-full text-left px-4 py-2 text-sm hover:bg-gray-100" data-comment-id="${comment.id}">Sửa</button>
+                                                                                                                <form action="/@${comment.user.mention}/posts/${comment.post_id}/comments/${comment.id}"
+                                                                                                                      method="POST" class="inline comment-delete-form w-full">
+                                                                                                                    <input type="hidden" name="_token" value="{{ csrf_token() }}">
+                                                                                                                    <input type="hidden" name="_method" value="DELETE">
+                                                                                                                    <button type="submit" class="block w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-gray-100"
+                                                                                                                            onclick="return confirm('Bạn có chắc chắn muốn xóa ${isReply ? 'phản hồi' : 'bình luận'} này?');">Xóa</button>
+                                                                                                                </form>
+                                                                                                                ${comment.can_report && !comment.can_delete ? `
                                                                                                             <button type="button" onclick="openReportModal('comment', ${comment.id})"
                                                                                                                     class="block w-full text-left px-4 py-2 text-sm text-black hover:bg-gray-100">Báo cáo</button>
                                                                                                         ` : ''}
-                                                                                                            ${comment.can_delete && comment.post_owner && !comment.is_owner ? `
+                                                                                                                ${comment.can_delete && comment.post_owner && !comment.is_owner ? `
                                                                                                             <button type="button" onclick="openReportModal('comment', ${comment.id})"
                                                                                                                     class="block w-full text-left px-4 py-2 text-sm text-black hover:bg-gray-100">Báo cáo</button>
                                                                                                         ` : ''}
+                                                                                                            </div>
                                                                                                         </div>
-                                                                                                    </div>
-                                                                                                ` : comment.can_report ? `
-                                                                                                    <div class="dropdown">
-                                                                                                        <button class="dropdown-toggle" type="button" data-comment-id="${comment.id}">
-                                                                                                            <i class="fa-solid fa-ellipsis-vertical"></i>
-                                                                                                        </button>
-                                                                                                        <div class="dropdown-menu" id="dropdown-menu-comment-${comment.id}">
-                                                                                                            <button type="button" onclick="openReportModal('comment', ${comment.id})"
-                                                                                                                    class="block w-full text-left px-4 py-2 text-sm text-black hover:bg-gray-100">Báo cáo</button>
+                                                                                                    ` : comment.can_report ? `
+                                                                                                        <div class="dropdown">
+                                                                                                            <button class="dropdown-toggle" type="button" data-comment-id="${comment.id}">
+                                                                                                                <i class="fa-solid fa-ellipsis-vertical"></i>
+                                                                                                            </button>
+                                                                                                            <div class="dropdown-menu" id="dropdown-menu-comment-${comment.id}">
+                                                                                                                <button type="button" onclick="openReportModal('comment', ${comment.id})"
+                                                                                                                        class="block w-full text-left px-4 py-2 text-sm text-black hover:bg-gray-100">Báo cáo</button>
+                                                                                                            </div>
                                                                                                         </div>
-                                                                                                    </div>
-                                                                                                ` : ''}
+                                                                                                    ` : ''}
                                             </div>
                                             <p class="text-${isReply ? 'xs' : 'sm'} text-gray-800 mt-1 comment-text">${comment.content.replace(/\n/g, '<br>')}</p>
                                         </div>

@@ -17,24 +17,32 @@ use Illuminate\Support\Facades\View;
 use App\Models\Building;
 use App\Models\Floor;
 use App\Models\Room;
+use App\Models\Report;
 
 class PostController extends Controller
 {
-    public function index()
-    {
-        $posts = Post::with('user')->latest();
-        return view('user.posts.index', compact('posts'));
-    }
+    // public function index()
+    // {
+    //     $posts = Post::with('user')->latest();
+    //     return view('user.posts.index', compact('posts'));
+    // }
 
     public function home(Request $request)
     {
-        $posts = Post::with(['user', 'media', 'room'])->latest()->paginate(10);
+        $posts = Post::with(['user', 'media', 'room'])
+            ->whereDoesntHave('reports', function ($query) {
+                $query->where('status', 'resolved'); // hoặc 'banned' nếu bạn đặt vậy
+            })
+            ->latest()
+            ->paginate(10);
+
         if ($request->ajax()) {
             return response()->json([
                 'posts' => $posts->items(),
                 'next_page_url' => $posts->nextPageUrl(),
             ]);
         }
+
         return view('home', compact('posts'));
     }
 
@@ -78,39 +86,48 @@ class PostController extends Controller
             return redirect()->route('login')->with('error', 'Bạn cần đăng nhập để đăng bài');
         }
 
+        // Check user bị ban
+        if ($user->isBanned()) {
+            return back()->with('error', 'Tài khoản của bạn hiện không thể đăng bài.');
+        }
+
         // Sinh slug ngẫu nhiên
         $slug = $this->generateRandomSlug(12);
 
         $hashtag = $request->hashtag ? str_replace('#', '', $request->hashtag) : null;
         $buildingId = $this->getBuildingIdFromRoom($request->room_id);
 
-        $post = $user->posts()->create([
-            'title'   => $request->title,
-            'content' => $request->content,
-            'hashtag' => $hashtag,
-            'slug'    => $slug,
-            'room_id' => $request->room_id,
-            'building_id' => $buildingId,
-        ]);
+        try {
+            $post = $user->posts()->create([
+                'title'       => $request->title,
+                'content'     => $request->content,
+                'hashtag'     => $hashtag,
+                'slug'        => $slug,
+                'room_id'     => $request->room_id,
+                'building_id' => $buildingId,
+            ]);
 
-        if (!$post) {
-            Log::error('Post not created', ['user_id' => $user->id, 'request' => $request->all()]);
-            return back()->with('error', 'Tạo bài viết thất bại');
-        }
+            // Lưu media (ảnh + video)
+            if ($request->hasFile('media')) {
+                foreach ($request->file('media') as $file) {
+                    $ext  = strtolower($file->getClientOriginalExtension());
+                    $type = in_array($ext, ['jpg', 'jpeg', 'png', 'gif', 'webp']) ? 'image' : 'video';
 
-        // Lưu media (ảnh + video)
-        if ($request->hasFile('media')) {
-            foreach ($request->file('media') as $file) {
-                $ext  = strtolower($file->getClientOriginalExtension());
-                $type = in_array($ext, ['jpg', 'jpeg', 'png', 'gif', 'webp']) ? 'image' : 'video';
+                    $path = $file->store('posts/media', 'public');
 
-                $path = $file->store('posts/media', 'public');
-
-                $post->media()->create([
-                    'media_path' => $path,
-                    'media_type' => $type,
-                ]);
+                    $post->media()->create([
+                        'media_path' => $path,
+                        'media_type' => $type,
+                    ]);
+                }
             }
+        } catch (\Exception $e) {
+            Log::error('Post creation failed', [
+                'user_id' => $user->id,
+                'request' => $request->all(),
+                'error'   => $e->getMessage(),
+            ]);
+            return back()->with('error', 'Tạo bài viết thất bại');
         }
 
         return redirect()->route('home')->with('success', 'Đăng bài thành công!');
@@ -160,6 +177,18 @@ class PostController extends Controller
             abort(404);
         }
 
+        // Nếu không phải admin thì mới chặn bài viết bị khóa
+        if (!Auth::check() || Auth::user()->role !== 'Admin') {
+            $isBanned = Report::where('reportable_type', Post::class)
+                ->where('reportable_id', $post->id)
+                ->where('status', 'resolved')
+                ->exists();
+
+            if ($isBanned) {
+                return redirect()->back()->with('error', 'Bài viết này đã bị khóa hoặc không tồn tại.');
+            }
+        }
+
         // Key để check trong session
         $sessionKey = 'viewed_post_' . $post->id;
 
@@ -169,7 +198,18 @@ class PostController extends Controller
             Session::put($sessionKey, true);
         }
 
-        return view('user.posts.show', compact('user', 'post'));
+        // Lấy comments hợp lệ (ẩn comment cha bị khóa và toàn bộ replies của nó)
+        $comments = $post->comments()
+            ->with([
+                'user',
+                'replies' => function ($q) {
+                    $q->with('user')->visible();
+                }
+            ])
+            ->visible()
+            ->get();
+
+        return view('user.posts.show', compact('user', 'post', 'comments'));
     }
 
     /**
@@ -353,5 +393,33 @@ class PostController extends Controller
             ->paginate(10);
 
         return view('user.posts.lost_item', compact('posts'));
+    }
+
+    /**
+     * Hiển thị các bài viết đã thích
+     */
+    public function liked(Request $request)
+    {
+        $user = Auth::user();
+        if (!$user) {
+            return redirect()->route('login')->with('error', 'Bạn cần đăng nhập để xem các bài viết đã thích.');
+        }
+
+        $posts = $user->likes()
+            ->with(['user', 'media', 'room'])
+            ->whereDoesntHave('reports', function ($query) {
+                $query->where('status', 'resolved');
+            })
+            ->latest()
+            ->paginate(10);
+
+        if ($request->ajax()) {
+            return response()->json([
+                'posts' => $posts->items(),
+                'next_page_url' => $posts->nextPageUrl(),
+            ]);
+        }
+
+        return view('user.posts.liked', compact('posts'));
     }
 }

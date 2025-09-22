@@ -49,9 +49,27 @@ class ReportController extends Controller
     }
     public function store(Request $request)
     {
+        $user = Auth::user();
+
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Bạn cần đăng nhập để báo cáo.'
+            ], 403);
+        }
+
+        // Nếu user bị ban thì không được report
+        if ($user->isBanned()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Tài khoản của bạn hiện không thể báo cáo.'
+            ], 403);
+        }
+
         $request->validate([
             'reportable_id' => 'required|integer',
             'reportable_type' => 'required|string|in:user,post,comment',
+            'reason' => 'nullable|string|max:1000',
         ]);
 
         $map = [
@@ -61,7 +79,7 @@ class ReportController extends Controller
         ];
 
         // Kiểm tra xem đã report chưa
-        $exists = Report::where('reporter_id', Auth::id())
+        $exists = Report::where('reporter_id', $user->id)
             ->where('reportable_id', $request->reportable_id)
             ->where('reportable_type', $map[$request->reportable_type])
             ->exists();
@@ -75,10 +93,10 @@ class ReportController extends Controller
 
         // Nếu chưa có thì tạo mới
         Report::create([
-            'reporter_id' => Auth::id(),
-            'reportable_id' => $request->reportable_id,
+            'reporter_id'     => $user->id,
+            'reportable_id'   => $request->reportable_id,
             'reportable_type' => $map[$request->reportable_type],
-            'reason' => $request->reason,
+            'reason'          => $request->reason,
         ]);
 
         return response()->json([

@@ -7,10 +7,6 @@
         <h1 class="text-lg font-semibold">@yield('page-title', 'Tổng quan hệ thống')</h1>
     </div>
     <div class="flex items-center space-x-4">
-        <button class="relative">
-            <i class="fa-regular fa-bell text-lg"></i>
-            <span class="absolute -top-1 -right-1 bg-red-500 text-white text-xs px-1 rounded-full">3</span>
-        </button>
         <div class="relative group">
             <button class="flex items-center space-x-2 focus:outline-none">
                 <img src="https://ui-avatars.com/api/?name=Admin" alt="avatar" class="w-8 h-8 rounded-full">

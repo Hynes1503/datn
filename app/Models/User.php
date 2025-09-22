@@ -92,4 +92,12 @@ class User extends Authenticatable
     {
         return $this->morphMany(Report::class, 'reportable');
     }
+    // App\Models\User.php
+    public function isBanned()
+    {
+        // Kiểm tra nếu có report resolved
+        return $this->reports()
+            ->where('status', 'resolved')
+            ->exists();
+    }
 }

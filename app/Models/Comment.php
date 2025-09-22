@@ -43,4 +43,14 @@ class Comment extends Model
     {
         return $this->morphMany(Report::class, 'reportable');
     }
+    // App\Models\Comment.php
+    public function scopeVisible($query)
+    {
+        return $query->whereDoesntHave('reports', function ($q) {
+            $q->where('status', 'resolved');
+        })
+            ->whereDoesntHave('parent.reports', function ($q) {
+                $q->where('status', 'resolved');
+            });
+    }
 }

@@ -11,11 +11,21 @@ class FollowController extends Controller
 {
     public function follow(User $user)
     {
-        if (Auth::id() === $user->id) {
-            return back()->with('error', 'Bạn không thể theo dõi chính mình.');
+        $authUser = Auth::user();
+
+        // Kiểm tra đăng nhập
+        if (!$authUser) {
+            return back()->with('error', 'Bạn cần đăng nhập để theo dõi.');
         }
 
-        $authUser = Auth::user();
+        // Check user bị ban
+        if ($authUser->isBanned()) {
+            return back()->with('error', 'Tài khoản của bạn hiện không thể theo dõi/hủy theo dõi.');
+        }
+
+        if ($authUser->id === $user->id) {
+            return back()->with('error', 'Bạn không thể theo dõi chính mình.');
+        }
 
         if (!$authUser->isFollowing($user)) {
             $authUser->follows()->attach($user->id);
@@ -27,11 +37,23 @@ class FollowController extends Controller
 
     public function unfollow(User $user)
     {
-        if (Auth::id() === $user->id) {
+        $authUser = Auth::user();
+
+        // Kiểm tra đăng nhập
+        if (!$authUser) {
+            return back()->with('error', 'Bạn cần đăng nhập để bỏ theo dõi.');
+        }
+
+        // Check user bị ban
+        if ($authUser->isBanned()) {
+            return back()->with('error', 'Tài khoản của bạn hiện không thể theo dõi/hủy theo dõi.');
+        }
+
+        if ($authUser->id === $user->id) {
             return back()->with('error', 'Bạn không thể bỏ theo dõi chính mình.');
         }
 
-        Auth::user()->follows()->detach($user->id);
+        $authUser->follows()->detach($user->id);
 
         return back()->with('success', "Đã bỏ theo dõi {$user->name}.");
     }
@@ -44,7 +66,9 @@ class FollowController extends Controller
                 'name' => $follower->name,
                 'mention' => $follower->mention,
                 'avatar' => $follower->avatar,
-                'is_mutual' => Auth::check() && Auth::user()->isFollowing($follower) && $follower->isFollowing(Auth::user()),
+                'is_mutual' => Auth::check()
+                    && Auth::user()->isFollowing($follower)
+                    && $follower->isFollowing(Auth::user()),
             ];
         });
 

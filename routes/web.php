@@ -68,6 +68,8 @@ Route::post('/login', [LoginController::class, 'login']);
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 Route::get('/hashtag/{hashtag}', [PostController::class, 'byHashtag'])->name('posts.byHashtag');
 Route::get('/lost_item', [PostController::class, 'lost_index'])->name('posts.lostItem');
+Route::get('/liked', [PostController::class, 'liked'])->name('posts.liked');
+
 
 // ================= POSTS =================
 Route::middleware('auth.custom')->group(function () {

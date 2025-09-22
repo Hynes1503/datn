@@ -9,6 +9,8 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
+use App\Models\Post;
+use App\Models\Report;
 
 class UserController extends Controller
 {
@@ -45,12 +47,27 @@ class UserController extends Controller
 
         return redirect()->route('users.index')->with('success', 'User created successfully');
     }
-
     public function show($mention)
     {
-        $user = User::where('mention', $mention)->with(['posts.images'])->firstOrFail();
-        return view('user.users.show', compact('user'));
+        $user = User::where('mention', $mention)->firstOrFail();
+
+        // Nếu là admin => lấy tất cả bài viết
+        if (Auth::check() && Auth::user()->role === 'Admin') {
+            $posts = $user->posts()->with(['images'])->latest()->get();
+        } else {
+            // Người thường => ẩn bài viết có report status = 'resolved'
+            $posts = $user->posts()
+                ->whereDoesntHave('reports', function ($query) {
+                    $query->where('status', 'resolved');
+                })
+                ->with(['images'])
+                ->latest()
+                ->get();
+        }
+
+        return view('user.users.show', compact('user', 'posts'));
     }
+
 
     public function edit($mention)
     {

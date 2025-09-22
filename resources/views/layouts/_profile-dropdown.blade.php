@@ -1,4 +1,3 @@
-<!-- resources/views/components/navbar/_profile-dropdown.blade.php -->
 @if (Auth::check())
     <div class="relative">
         <!-- Avatar button -->
@@ -17,6 +16,13 @@
                 class="flex justify-between items-center px-4 py-3 text-sm text-gray-700 hover:bg-gray-100 border-b border-gray-100 transition-colors">
                 <span>Hồ sơ</span>
                 <i class="fa-solid fa-user text-gray-500"></i>
+            </a>
+
+            <!-- Bài viết đã thích -->
+            <a href="{{ route('posts.liked') }}"
+                class="flex justify-between items-center px-4 py-3 text-sm text-gray-700 hover:bg-gray-100 border-b border-gray-100 transition-colors">
+                <span>Bài viết đã thích</span>
+                <i class="fa-solid fa-heart text-gray-500"></i>
             </a>
 
             <!-- Đăng xuất -->

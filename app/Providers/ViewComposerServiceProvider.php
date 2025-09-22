@@ -23,6 +23,10 @@ class ViewComposerServiceProvider extends ServiceProvider
                 $user = Auth::user();
 
                 $suggestedUsers = User::where('id', '!=', $user->id)
+                    ->where('role', '!=', 'Admin') // loại Admin
+                    ->whereDoesntHave('reports', function ($q) {
+                        $q->where('status', 'resolved'); // loại user bị khóa
+                    })
                     ->take(5)
                     ->get();
             }

@@ -79,4 +79,12 @@ class Post extends Model
     {
         return $this->morphMany(Report::class, 'reportable');
     }
+    // App\Models\Post.php
+    public function scopeVisible($query)
+    {
+        return $query->whereDoesntHave('reports', function ($q) {
+            $q->where('status', 'resolved');
+        });
+    }
+    
 }

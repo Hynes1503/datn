@@ -12,13 +12,13 @@
             transition: color 0.2s, background-color 0.2s;
             padding: 8px;
             border-radius: 4px;
-            border: 1px solid #d1d5db; /* Individual border for each icon */
-            width: 36px; /* Fixed width for square shape */
-            height: 36px; /* Fixed height for square shape */
+            border: 1px solid #d1d5db;
+            width: 36px;
+            height: 36px;
             display: flex;
             align-items: center;
             justify-content: center;
-            text-decoration: none; /* Ensure no underline on links */
+            text-decoration: none;
         }
 
         .action-icon:hover {
@@ -67,16 +67,23 @@
             transform: translateX(0);
         }
 
+        .toast.error {
+            background-color: #fee2e2;
+            color: #b91c1c;
+        }
+
         /* Filter form styles */
         .filter-form {
-            display: none; /* Hidden by default */
-            gap: 16px;
-            flex-wrap: wrap;
+            display: none;
+            flex-wrap: nowrap; /* Prevent wrapping to keep all elements in one row */
+            align-items: flex-end;
+            gap: 12px; /* Reduced gap for tighter spacing */
             margin-bottom: 16px;
+            width: 100%;
         }
 
         .filter-form.show {
-            display: flex; /* Show when toggled */
+            display: flex;
         }
 
         .filter-form select,
@@ -85,15 +92,24 @@
             border: 1px solid #d1d5db;
             border-radius: 4px;
             font-size: 14px;
+            min-width: 100px; /* Minimum width to prevent collapse */
+            flex: 1; /* Allow inputs to shrink proportionally */
+            height: 34px; /* Consistent height for all inputs and selects */
+            box-sizing: border-box; /* Ensure padding is included in height/width */
         }
 
-        .filter-form button {
+        .filter-form button,
+        .filter-form a.clear-btn {
             padding: 8px 16px;
             background-color: #3b82f6;
             color: white;
             border-radius: 4px;
             border: none;
             cursor: pointer;
+            flex: 0 0 auto; /* Prevent buttons from shrinking */
+            white-space: nowrap; /* Prevent text wrapping in buttons */
+            height: 34px; /* Match height of inputs and selects */
+            line-height: 18px; /* Center text vertically */
         }
 
         .filter-form button:hover {
@@ -108,24 +124,67 @@
             background-color: #dc2626;
         }
 
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .filter-form select,
+            .filter-form input {
+                min-width: 80px; /* Smaller minimum width for mobile */
+                font-size: 12px; /* Slightly smaller font for mobile */
+                height: 30px; /* Slightly smaller height for mobile */
+            }
+
+            .filter-form button,
+            .filter-form a.clear-btn {
+                padding: 6px 12px; /* Smaller padding for buttons */
+                font-size: 12px; /* Smaller font for buttons */
+                height: 30px; /* Match mobile height of inputs */
+                line-height: 18px; /* Adjust vertical alignment */
+            }
+
+            .filter-form {
+                gap: 8px; /* Tighter gap on smaller screens */
+            }
+        }
+
         /* Select2 custom styles */
         .select2-container {
-            width: 200px !important;
+            flex: 1; /* Allow Select2 to shrink proportionally */
+            min-width: 100px; /* Match min-width of inputs */
+            max-width: 200px; /* Maximum width to prevent over-expansion */
         }
 
         .select2-container .select2-selection--single {
-            height: 34px;
+            height: 34px; /* Match height of inputs */
             border: 1px solid #d1d5db;
             border-radius: 4px;
+            box-sizing: border-box; /* Ensure padding is included */
         }
 
         .select2-container .select2-selection__rendered {
-            line-height: 34px;
+            line-height: 34px; /* Center text vertically */
             padding-left: 8px;
+            font-size: 14px; /* Match font size of inputs */
         }
 
         .select2-container .select2-selection__arrow {
-            height: 34px;
+            height: 34px; /* Match height */
+            width: 24px; /* Ensure consistent arrow size */
+        }
+
+        /* Responsive Select2 adjustments */
+        @media (max-width: 768px) {
+            .select2-container .select2-selection--single {
+                height: 30px; /* Match mobile height of inputs */
+            }
+
+            .select2-container .select2-selection__rendered {
+                line-height: 30px; /* Adjust for mobile */
+                font-size: 12px; /* Match mobile font size */
+            }
+
+            .select2-container .select2-selection__arrow {
+                height: 30px; /* Match mobile height */
+            }
         }
 
         /* Excel-like table styles */
@@ -138,24 +197,24 @@
 
         .excel-table th,
         .excel-table td {
-            border: 1px solid #d1d5db; /* Thin grid lines like Excel */
+            border: 1px solid #d1d5db;
             padding: 8px;
             text-align: left;
             vertical-align: middle;
         }
 
         .excel-table th {
-            background-color: #f4f4f5; /* Light gray header like Excel */
+            background-color: #f4f4f5;
             font-weight: 600;
             color: #1f2937;
         }
 
         .excel-table tr:nth-child(even) {
-            background-color: #f9fafb; /* Alternating row colors */
+            background-color: #f9fafb;
         }
 
         .excel-table tr:hover {
-            background-color: #e5e7eb; /* Hover effect */
+            background-color: #e5e7eb;
         }
 
         .excel-table td a {
@@ -170,34 +229,34 @@
         /* Fixed column widths for Excel-like appearance */
         .excel-table th:nth-child(1),
         .excel-table td:nth-child(1) {
-            width: 5%; /* STT */
+            width: 5%;
             text-align: center;
         }
 
         .excel-table th:nth-child(2),
         .excel-table td:nth-child(2) {
-            width: 30%; /* Nội dung */
+            width: 30%;
         }
 
         .excel-table th:nth-child(3),
         .excel-table td:nth-child(3) {
-            width: 15%; /* Người dùng */
+            width: 15%;
         }
 
         .excel-table th:nth-child(4),
         .excel-table td:nth-child(4) {
-            width: 30%; /* Bài viết */
+            width: 30%;
         }
 
         .excel-table th:nth-child(5),
         .excel-table td:nth-child(5) {
-            width: 15%; /* Ngày tạo */
+            width: 15%;
         }
 
         .excel-table th:nth-child(6),
         .excel-table td:nth-child(6) {
-            width: 10%; /* Hành động */
-            min-width: 100px; /* Ensure enough space for icons */
+            width: 10%;
+            min-width: 100px;
             text-align: center;
         }
 
@@ -207,10 +266,9 @@
             justify-content: center;
             align-items: center;
             gap: 8px;
-            min-height: 40px; /* Prevent collapse */
+            min-height: 40px;
         }
 
-        /* Ensure form doesn't affect layout */
         .action-cell form {
             display: inline-flex;
             margin: 0;
@@ -226,7 +284,7 @@
         </div>
 
         <!-- Filter Form -->
-        <form action="{{ route('admin.comments.index') }}" method="GET" class="filter-form">
+        <form action="{{ route('admin.comments.index') }}" method="GET" class="filter-form" id="filter-form">
             <div>
                 <label for="user_id" class="block text-sm font-medium text-gray-700">Người dùng</label>
                 <select name="user_id" id="user_id" class="mt-1 select2">
@@ -250,11 +308,11 @@
                 </select>
             </div>
             <div>
-                <label for="date_from" class="block text-sm font-medium text-gray-700">Ngày tạo từ</label>
+                <label for="date_from" class="block text-sm font-medium text-gray-700">Ngày bắt đầu</label>
                 <input type="date" name="date_from" id="date_from" value="{{ request('date_from') }}" class="mt-1">
             </div>
             <div>
-                <label for="date_to" class="block text-sm font-medium text-gray-700">Ngày tạo đến</label>
+                <label for="date_to" class="block text-sm font-medium text-gray-700">Ngày kết thúc</label>
                 <input type="date" name="date_to" id="date_to" value="{{ request('date_to') }}" class="mt-1">
             </div>
             <div class="flex items-end gap-2">
@@ -363,9 +421,13 @@
             // Handle filter form toggle
             const filterToggle = document.querySelector('.filter-toggle');
             const filterForm = document.querySelector('.filter-form');
-            filterToggle.addEventListener('click', () => {
-                filterForm.classList.toggle('show');
-            });
+            if (filterToggle && filterForm) {
+                filterToggle.addEventListener('click', () => {
+                    filterForm.classList.toggle('show');
+                });
+            } else {
+                console.error('Filter toggle or form not found in the DOM');
+            }
 
             // Handle toast notification
             const toast = document.getElementById('toast');
@@ -380,6 +442,32 @@
                         toast.remove();
                     }, 300);
                 }, 3000);
+            }
+
+            // Handle date validation
+            const filterFormElement = document.getElementById('filter-form');
+            if (filterFormElement) {
+                filterFormElement.addEventListener('submit', function (event) {
+                    const dateFrom = document.getElementById('date_from').value;
+                    const dateTo = document.getElementById('date_to').value;
+
+                    if (dateFrom && dateTo && new Date(dateFrom) > new Date(dateTo)) {
+                        event.preventDefault(); // Prevent form submission
+                        const errorToast = $('<div class="toast error">Ngày bắt đầu không được muộn hơn ngày kết thúc.</div>');
+                        $('body').append(errorToast);
+                        setTimeout(() => {
+                            errorToast.addClass('show');
+                        }, 100);
+                        setTimeout(() => {
+                            errorToast.removeClass('show');
+                            setTimeout(() => {
+                                errorToast.remove();
+                            }, 300);
+                        }, 3000);
+                    }
+                });
+            } else {
+                console.error('Filter form element not found');
             }
         });
     </script>

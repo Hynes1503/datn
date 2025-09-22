@@ -19,42 +19,66 @@ class CommentController extends Controller
             return response()->json(['error' => 'Bạn cần đăng nhập để bình luận.'], 403);
         }
 
+        $user = Auth::user();
+
+        // Kiểm tra user bị ban
+        if ($user->isBanned()) {
+            return response()->json(['error' => 'Tài khoản của bạn hiện không thể bình luận.'], 403);
+        }
+
+        // Kiểm tra bài viết có bị ban không
+        if ($post->reports()->where('status', 'resolved')->exists()) {
+            return response()->json(['error' => 'Bài viết này đã bị chặn, không thể bình luận.'], 403);
+        }
+
         $request->validate([
-            'content' => 'required|string|max:1000',
-            'parent_id' => 'nullable|exists:comments,id',
+            'content'   => 'required|string|max:1000',
+            'parent_id' => [
+                'nullable',
+                'exists:comments,id',
+                function ($attribute, $value, $fail) {
+                    if ($value) {
+                        $parent = \App\Models\Comment::find($value);
+                        if ($parent && $parent->reports()->where('status', 'resolved')->exists()) {
+                            $fail('Bình luận này đã bị chặn, không thể trả lời.');
+                        }
+                    }
+                },
+            ],
         ]);
 
         $comment = Comment::create([
-            'user_id' => Auth::id(),
-            'post_id' => $post->id,
-            'content' => $request->content,
+            'user_id'   => $user->id,
+            'post_id'   => $post->id,
+            'content'   => $request->content,
             'parent_id' => $request->parent_id,
         ]);
 
         $comment->load('user');
 
         // Gửi thông báo cho chủ bài viết (nếu không phải chính họ)
-        if (Auth::id() !== $post->user_id) {
-            $post->user->notify(new CommentNotification(Auth::user(), $post, $comment));
+        if ($user->id !== $post->user_id) {
+            $post->user->notify(new CommentNotification($user, $post, $comment));
         }
 
         return response()->json([
             'success' => true,
             'comment' => [
-                'id' => $comment->id,
-                'content' => $comment->content,
-                'user' => [
-                    'id' => $comment->user->id,
-                    'name' => $comment->user->name,
-                    'mention' => $comment->user->mention,
+                'id'         => $comment->id,
+                'content'    => $comment->content,
+                'user'       => [
+                    'id'         => $comment->user->id,
+                    'name'       => $comment->user->name,
+                    'mention'    => $comment->user->mention,
                     'avatar_url' => $comment->user->avatar_url,
                 ],
-                'post_id' => $post->id,
+                'post_id'    => $post->id,
                 'created_at' => $comment->created_at->toIso8601String(),
-                'can_delete' => Auth::id() === $comment->user_id || Auth::user()->ownsPost($post),
+                'can_delete' => $user->id === $comment->user_id || $user->ownsPost($post),
             ],
         ], 201);
     }
+
 
     /**
      * Xóa bình luận
