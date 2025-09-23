@@ -194,6 +194,17 @@
                 height: 30px; /* Match mobile height */
             }
         }
+
+        /* User name link styling */
+        .user-name-link {
+            color: #3b82f6;
+            text-decoration: none;
+        }
+
+        .user-name-link:hover {
+            color: #2563eb;
+            text-decoration: underline;
+        }
     </style>
 
     <div class="bg-white rounded-lg shadow p-6">
@@ -255,15 +266,17 @@
                     <div class="flex items-center gap-3">
                         <img src="{{ $user->avatar_url }}" alt="Avatar" class="w-10 h-10 rounded-full">
                         <div>
-                            <div class="font-semibold">{{ $user->name }}</div>
+                            <a href="{{ route('admin.users.show', $user->mention) }}" class="font-semibold user-name-link">
+                                {{ $user->name }}
+                            </a>
                             <div class="text-sm text-gray-500">{{ '@'.$user->mention }} | {{ $user->role }}</div>
                         </div>
                     </div>
                     <div class="flex items-center gap-2">
-                        <a href="{{ route('admin.users.edit', $user) }}" title="Sửa người dùng">
+                        <a href="{{ route('admin.users.edit', $user->mention) }}" title="Sửa người dùng">
                             <i class="fa-solid fa-pencil action-icon edit-icon"></i>
                         </a>
-                        <form action="{{ route('admin.users.destroy', $user) }}" method="POST"
+                        <form action="{{ route('admin.users.destroy', $user->mention) }}" method="POST"
                               onsubmit="return confirm('Bạn có chắc muốn xóa người dùng này?')">
                             @csrf
                             @method('DELETE')

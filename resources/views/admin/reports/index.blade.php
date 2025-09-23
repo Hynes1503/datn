@@ -343,19 +343,19 @@
                 <label for="status" class="block text-sm font-medium text-gray-700">Trạng thái</label>
                 <select name="status" id="status" class="mt-1 select2">
                     <option value="">Tất cả</option>
-                    <option value="pending" {{ request('status') == 'pending' ? 'selected' : '' }}>Pending</option>
-                    <option value="reviewed" {{ request('status') == 'reviewed' ? 'selected' : '' }}>Reviewed</option>
-                    <option value="resolved" {{ request('status') == 'resolved' ? 'selected' : '' }}>Resolved</option>
-                    <option value="rejected" {{ request('status') == 'rejected' ? 'selected' : '' }}>Rejected</option>
+                    <option value="pending" {{ request('status') == 'pending' ? 'selected' : '' }}>Đang chờ</option>
+                    <option value="reviewed" {{ request('status') == 'reviewed' ? 'selected' : '' }}>Đã xem xét</option>
+                    <option value="resolved" {{ request('status') == 'resolved' ? 'selected' : '' }}>Đã giải quyết</option>
+                    <option value="rejected" {{ request('status') == 'rejected' ? 'selected' : '' }}>Đã từ chối</option>
                 </select>
             </div>
             <div>
                 <label for="reportable_type" class="block text-sm font-medium text-gray-700">Đối tượng</label>
                 <select name="reportable_type" id="reportable_type" class="mt-1 select2">
                     <option value="">Tất cả</option>
-                    <option value="user" {{ request('reportable_type') == 'user' ? 'selected' : '' }}>User</option>
-                    <option value="post" {{ request('reportable_type') == 'post' ? 'selected' : '' }}>Post</option>
-                    <option value="comment" {{ request('reportable_type') == 'comment' ? 'selected' : '' }}>Comment</option>
+                    <option value="user" {{ request('reportable_type') == 'user' ? 'selected' : '' }}>Người dùng</option>
+                    <option value="post" {{ request('reportable_type') == 'post' ? 'selected' : '' }}>Bài viết</option>
+                    <option value="comment" {{ request('reportable_type') == 'comment' ? 'selected' : '' }}>Bình luận</option>
                 </select>
             </div>
             <div>
@@ -406,25 +406,25 @@
                         <td>
                             @if ($report->reportable_type === \App\Models\User::class)
                                 <a href="{{ route('admin.users.show', $report->reportable->mention) }}" target="_blank">
-                                    <i class="fa-solid fa-user fa-icon"></i> User: {{ $report->reportable->name ?? '[Đã xoá]' }}
+                                    <i class="fa-solid fa-user fa-icon"></i> Người dùng: {{ $report->reportable->name ?? '[Đã xoá]' }}
                                 </a>
                             @elseif ($report->reportable_type === \App\Models\Post::class)
                                 <a href="{{ route('posts.show', [$report->reportable->user->mention, $report->reportable->slug]) }}" target="_blank">
-                                    <i class="fa-solid fa-file-alt fa-icon"></i> Post: {{ $report->reportable->title ?? '[Đã xoá]' }}
+                                    <i class="fa-solid fa-file-alt fa-icon"></i> Bài viết: {{ $report->reportable->title ?? '[Đã xoá]' }}
                                 </a>
                             @elseif ($report->reportable_type === \App\Models\Comment::class)
                                 <a href="{{ route('posts.show', [$report->reportable->post->user->mention, $report->reportable->post->slug]) }}#comment-{{ $report->reportable->id }}" target="_blank">
-                                    <i class="fa-solid fa-comment fa-icon"></i> Comment: {{ Str::limit($report->reportable->content ?? '[Đã xoá]', 50) }}
+                                    <i class="fa-solid fa-comment fa-icon"></i> Bình luận: {{ Str::limit($report->reportable->content ?? '[Đã xoá]', 50) }}
                                 </a>
                             @endif
                         </td>
                         <td>{{ $report->reason }}</td>
                         <td>
                             <select class="status-select status-{{ $report->status }}" data-report-id="{{ $report->id }}" data-current-status="{{ $report->status }}">
-                                <option value="pending" {{ $report->status == 'pending' ? 'selected' : '' }}>Pending</option>
-                                <option value="reviewed" {{ $report->status == 'reviewed' ? 'selected' : '' }}>Reviewed</option>
-                                <option value="resolved" {{ $report->status == 'resolved' ? 'selected' : '' }}>Resolved</option>
-                                <option value="rejected" {{ $report->status == 'rejected' ? 'selected' : '' }}>Rejected</option>
+                                <option value="pending" {{ $report->status == 'pending' ? 'selected' : '' }}>Đang chờ</option>
+                                <option value="reviewed" {{ $report->status == 'reviewed' ? 'selected' : '' }}>Đã xem xét</option>
+                                <option value="resolved" {{ $report->status == 'resolved' ? 'selected' : '' }}>Đã giải quyết</option>
+                                <option value="rejected" {{ $report->status == 'rejected' ? 'selected' : '' }}>Đã từ chối</option>
                             </select>
                         </td>
                         <td>{{ $report->created_at->format('d/m/Y H:i') }}</td>

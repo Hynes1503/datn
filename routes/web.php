@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\User\MainController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\OCRController;
@@ -19,9 +20,15 @@ use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\Admin\PostController as AdminPostController;
 use App\Http\Controllers\Admin\CommentController as AdminCommentController;
 use App\Http\Controllers\ReportController;
+use App\Http\Controllers\IncidentReportController;
+use App\Http\Controllers\IncidentReportReplyController;
 // Route gốc trả về trang login
 Route::get('/', function () {
-    return view('auth.login');
+    if (!Auth::check()) {
+        return view('auth.login');
+    }
+
+    return redirect()->route('home');
 })->name('welcome');
 
 // ================= ADMIN =================
@@ -48,6 +55,10 @@ Route::prefix('admin')->group(function () {
         Route::resource('comments', AdminCommentController::class, ['as' => 'admin']);
         Route::resource('/reports', ReportController::class)->only(['index', 'show', 'destroy']);
         Route::patch('reports/update-status', [ReportController::class, 'updateStatus'])->name('reports.updateStatus');
+        Route::post('/users/update-status', [AdminUserController::class, 'updateStatus'])->name('admin.users.update-status');
+        Route::post('/incident-reports/{report}/replies', [IncidentReportReplyController::class, 'store'])->name('incident_reports.replies.store');
+        Route::get('/incident-reports', [IncidentReportController::class, 'index'])->name('admin.incident-reports.index');
+        Route::post('/incident-reports/{report}/reply', [IncidentReportReplyController::class, 'store'])->name('admin.incident-reports.reply.store');
     });
 });
 
@@ -73,6 +84,9 @@ Route::get('/liked', [PostController::class, 'liked'])->name('posts.liked');
 
 // ================= POSTS =================
 Route::middleware('auth.custom')->group(function () {
+    Route::post('/incident-reports', [IncidentReportController::class, 'store'])->name('incident_reports.store');
+    Route::delete('/incident-reports/replies/{reply}', [IncidentReportReplyController::class, 'destroy'])->name('incident_reports.replies.destroy');
+    Route::delete('/incident-reports/{report}', [IncidentReportController::class, 'destroy'])->name('incident_reports.destroy');
     Route::get('/get-floors/{building}', [LocationController::class, 'getFloors']);
     Route::get('/get-rooms/{floor}', [LocationController::class, 'getRooms']);
     Route::get('/home', [PostController::class, 'home'])->name('home');

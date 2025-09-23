@@ -8,6 +8,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use App\Models\Report;
+use Illuminate\Support\Facades\Auth;
 
 class UserController extends Controller
 {
@@ -72,9 +74,60 @@ class UserController extends Controller
     // Xem chi tiết user
     public function show(User $user)
     {
-        return view('admin.users.show', compact('user'));
+        // Load the user with paginated posts, including media and room relationships
+        $posts = $user->posts()
+            ->with('media', 'room')
+            ->orderBy('created_at', 'desc')
+            ->paginate(10); // Paginate with 10 posts per page
+        $report = Report::where('reportable_id', $user->id)
+            ->where('reportable_type', User::class)
+            ->orderBy('created_at', 'desc')
+            ->first();
+        return view('admin.users.show', compact('user', 'posts', 'report'));
     }
+    // Updated method to update user status in App\Http\Controllers\Admin\UserController
+    public function updateStatus(Request $request)
+    {
+        $request->validate([
+            'user_id' => 'required|exists:users,id',
+            'status' => 'required|in:pending,reviewed,resolved,rejected',
+        ]);
 
+        $user = User::findOrFail($request->user_id);
+        $admin = Auth::user();
+
+        if (!$admin || $admin->role !== 'Admin') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Bạn không có quyền thực hiện hành động này.'
+            ], 403);
+        }
+
+        // Find or create a report for the user
+        $report = Report::where('reportable_id', $user->id)
+            ->where('reportable_type', User::class)
+            ->orderBy('created_at', 'desc')
+            ->first();
+
+        if ($report) {
+            // Update existing report status
+            $report->update(['status' => $request->status]);
+        } else {
+            // Create a new report if none exists
+            Report::create([
+                'reporter_id' => $admin->id,
+                'reportable_id' => $user->id,
+                'reportable_type' => User::class,
+                'reason' => 'Status updated by admin',
+                'status' => $request->status,
+            ]);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Cập nhật trạng thái người dùng thành công.'
+        ]);
+    }
     // Form sửa user
     public function edit(User $user)
     {

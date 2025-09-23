@@ -22,7 +22,6 @@
 
         {{-- Quản lý địa điểm --}}
         <div x-data="{ open: {{ request()->routeIs('admin.buildings.*') || request()->routeIs('admin.floors.*') || request()->routeIs('admin.rooms.*') ? 'true' : 'false' }} }" class="space-y-1">
-
             <button @click="open = !open"
                 class="w-full flex items-center justify-between px-3 py-2 rounded-lg hover:bg-gray-100
                        @if (request()->routeIs('admin.buildings.*') ||
@@ -91,6 +90,22 @@
                 <span class="ml-auto bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full"
                     x-show="sidebarOpen" x-transition>
                     {{ \App\Models\Report::pendingCount() }}
+                </span>
+            @endif
+        </a>
+
+        {{-- Báo cáo sự cố --}}
+        <a href="{{ route('admin.incident-reports.index') }}"
+            class="flex items-center px-3 py-2 rounded-lg hover:bg-gray-100 
+                   @if (request()->routeIs('admin.incident-reports.*')) bg-gray-100 font-semibold @endif">
+            <i class="fa-solid fa-exclamation-circle mr-3 text-red-600"></i>
+            <span x-show="sidebarOpen" x-transition class="flex-1">Phản hồi sự cố</span>
+
+            {{-- Badge số báo cáo sự cố pending --}}
+            @if (\App\Models\IncidentReport::pendingCount() > 0)
+                <span class="ml-auto bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full"
+                    x-show="sidebarOpen" x-transition>
+                    {{ \App\Models\IncidentReport::pendingCount() }}
                 </span>
             @endif
         </a>
