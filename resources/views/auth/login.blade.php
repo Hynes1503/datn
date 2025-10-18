@@ -147,7 +147,7 @@
 </head>
 <body>
     <div class="container">
-        <h1>EPUhub</h1>
+        <h1>Ehub</h1>
 
         @if (session('error'))
             <div class="error-box">

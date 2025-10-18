@@ -6,10 +6,12 @@
         </button>
         <h1 class="text-lg font-semibold">@yield('page-title', 'Tổng quan hệ thống')</h1>
     </div>
-    <div class="flex items-center space-x-4">
+    {{-- <div class="flex items-center space-x-4">
         <div class="relative group">
             <button class="flex items-center space-x-2 focus:outline-none">
-                <img src="https://ui-avatars.com/api/?name=Admin" alt="avatar" class="w-8 h-8 rounded-full">
+                <img src="{{ asset('storage/' . (Auth::user()->avatar ?? '')) }}" alt="{{ Auth::user()->name }}"
+                    class="w-8 h-8 rounded-full"
+                    onerror="this.onerror=null;this.src='{{ asset('images/default-avatar.png') }}';">
                 <span class="hidden md:inline text-sm font-medium">Admin</span>
             </button>
             <div class="absolute right-0 mt-2 w-40 bg-white rounded-lg shadow-lg hidden group-hover:block">
@@ -20,5 +22,5 @@
                 </form>
             </div>
         </div>
-    </div>
+    </div> --}}
 </header>

@@ -208,6 +208,7 @@
                         <a href="{{ route('users.show', Auth::user()->mention) }}">Trang cá nhân</a>
                         <a href="{{ route('home') }}">Sự kiện mới</a>
                         <a href="{{ route('posts.lostItem') }}">Tìm đồ/Mất đồ</a>
+                        <a href="{{ route('posts.top') }}">Top bài viết</a>
                     </div>
                 </div>
                 @yield('content')

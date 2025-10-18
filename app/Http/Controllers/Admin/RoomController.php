@@ -10,9 +10,6 @@ use Illuminate\Http\Request;
 
 class RoomController extends Controller
 {
-    // ======================
-    // BUILDING
-    // ======================
     public function createBuilding()
     {
         return view('admin.buildings.create');
@@ -35,10 +32,6 @@ class RoomController extends Controller
         return redirect()->back()->with('success', 'Thêm tòa thành công!');
     }
 
-
-    // ======================
-    // FLOOR
-    // ======================
     public function createFloor()
     {
         $buildings = Building::orderBy('name')->get();
@@ -64,9 +57,6 @@ class RoomController extends Controller
         return redirect()->back()->with('success', 'Thêm tầng thành công!');
     }
 
-    // ======================
-    // ROOM
-    // ======================
     public function createRoom()
     {
         $floors = Floor::with('building')->orderBy('name')->get();

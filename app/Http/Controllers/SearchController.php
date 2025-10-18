@@ -16,7 +16,6 @@ class SearchController extends Controller
         $posts = collect();
 
         if ($query) {
-            // Field luôn hiển thị
             $users = User::where('name', 'like', "%{$query}%")
                 ->orWhere(function ($q) use ($query) {
                     $optionalFields = [

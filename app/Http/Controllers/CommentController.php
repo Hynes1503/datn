@@ -10,9 +10,6 @@ use Illuminate\Support\Facades\Auth;
 
 class CommentController extends Controller
 {
-    /**
-     * Lưu bình luận hoặc trả lời mới
-     */
     public function store(Request $request, $userMention, Post $post)
     {
         if (!Auth::check()) {
@@ -21,12 +18,10 @@ class CommentController extends Controller
 
         $user = Auth::user();
 
-        // Kiểm tra user bị ban
         if ($user->isBanned()) {
             return response()->json(['error' => 'Tài khoản của bạn hiện không thể bình luận.'], 403);
         }
 
-        // Kiểm tra bài viết có bị ban không
         if ($post->reports()->where('status', 'resolved')->exists()) {
             return response()->json(['error' => 'Bài viết này đã bị chặn, không thể bình luận.'], 403);
         }
@@ -56,7 +51,6 @@ class CommentController extends Controller
 
         $comment->load('user');
 
-        // Gửi thông báo cho chủ bài viết (nếu không phải chính họ)
         if ($user->id !== $post->user_id) {
             $post->user->notify(new CommentNotification($user, $post, $comment));
         }
@@ -79,10 +73,6 @@ class CommentController extends Controller
         ], 201);
     }
 
-
-    /**
-     * Xóa bình luận
-     */
     public function destroy($userMention, Post $post, Comment $comment)
     {
         if (!Auth::check()) {
@@ -103,7 +93,6 @@ class CommentController extends Controller
 
     public function update(Request $request, $user, Post $post, Comment $comment)
     {
-        // Ensure the user is authorized to update the comment
         if (Auth::id() !== $comment->user_id && !Auth::user()->ownsPost($post)) {
             return response()->json(['error' => 'Bạn không có quyền sửa bình luận này.'], 403);
         }
@@ -118,7 +107,7 @@ class CommentController extends Controller
 
         return response()->json([
             'success' => true,
-            'comment' => $comment->fresh(), // Get the updated comment
+            'comment' => $comment->fresh(),
         ]);
     }
 }

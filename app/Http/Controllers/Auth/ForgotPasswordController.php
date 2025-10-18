@@ -27,7 +27,6 @@ class ForgotPasswordController extends Controller
         $input = $request->input('login');
         $user = null;
 
-        // Kiểm tra input là email hay MSSV
         if (filter_var($input, FILTER_VALIDATE_EMAIL)) {
             $user = User::where('email', $input)->first();
         } else {
@@ -38,16 +37,36 @@ class ForgotPasswordController extends Controller
             return back()->withErrors(['login' => 'Không tìm thấy tài khoản phù hợp']);
         }
 
-        // Gửi link reset mật khẩu
         $status = Password::sendResetLink(['email' => $user->email]);
 
-        return $status === Password::RESET_LINK_SENT
-            ? back()->with('status', "Hệ thống đã gửi link đặt lại mật khẩu tới email: {$user->email}")
-            : back()->withErrors(['login' => __($status)]);
+        if ($status === Password::RESET_LINK_SENT) {
+            $email = $user->email;
+            $parts = explode('@', $email);
+            $namePart = $parts[0];
+            $domainPart = $parts[1];
+
+            if (strlen($namePart) > 4) {
+                $hiddenName = substr($namePart, 0, 2)
+                    . str_repeat('*', strlen($namePart) - 4)
+                    . substr($namePart, -2);
+            } else {
+                $hiddenName = substr($namePart, 0, 1) . str_repeat('*', max(1, strlen($namePart) - 1));
+            }
+
+            $maskedEmail = $hiddenName . '@' . $domainPart;
+
+            return back()->with('status', "Hệ thống đã gửi link đặt lại mật khẩu tới email: {$maskedEmail}");
+        }
+
+        return back()->withErrors(['login' => __($status)]);
     }
+
     public function showResetForm(Request $request, $token)
     {
-        return view('auth.reset-password', ['token' => $token, 'email' => $request->email]);
+        return view('auth.reset-password', [
+            'token' => $token,
+            'email' => $request->email
+        ]);
     }
 
     public function reset(Request $request)

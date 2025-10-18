@@ -51,11 +51,9 @@ class UserController extends Controller
     {
         $user = User::where('mention', $mention)->firstOrFail();
 
-        // Nếu là admin => lấy tất cả bài viết
         if (Auth::check() && Auth::user()->role === 'Admin') {
             $posts = $user->posts()->with(['images'])->latest()->get();
         } else {
-            // Người thường => ẩn bài viết có report status = 'resolved'
             $posts = $user->posts()
                 ->whereDoesntHave('reports', function ($query) {
                     $query->where('status', 'resolved');

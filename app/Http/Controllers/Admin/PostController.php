@@ -32,7 +32,6 @@ class PostController extends Controller
             $slug .= $characters[random_int(0, strlen($characters) - 1)];
         }
 
-        // Đảm bảo slug là duy nhất
         while (Post::where('slug', $slug)->exists()) {
             $slug = $this->generateRandomSlug($length);
         }
@@ -43,12 +42,10 @@ class PostController extends Controller
     {
         $query = Post::with(['user', 'building', 'room']);
 
-        // Filter by user_id
         if ($request->filled('user_id')) {
             $query->where('user_id', $request->user_id);
         }
 
-        // Filter by date range
         if ($request->filled('date_from')) {
             $query->whereDate('created_at', '>=', $request->date_from);
         }
@@ -57,7 +54,6 @@ class PostController extends Controller
             $query->whereDate('created_at', '<=', $request->date_to);
         }
 
-        // Filter by hashtag
         if ($request->filled('hashtag')) {
             $query->where('hashtag', 'like', '%' . $request->hashtag . '%');
         }
@@ -98,7 +94,6 @@ class PostController extends Controller
             ],
         ]);
 
-        // Kiểm tra user
         $user = Auth::user();
         if (!$user) {
             return redirect()->route('login')->with('error', 'Bạn cần đăng nhập để đăng bài');
@@ -177,20 +172,16 @@ class PostController extends Controller
             ],
         ]);
 
-        // Check authenticated user
         $user = Auth::user();
         if (!$user) {
             return redirect()->route('login')->with('error', 'You need to be logged in to update a post');
         }
 
-        // Generate random slug
         $slug = $this->generateRandomSlug(12);
 
-        // Process hashtag
         $hashtag = $request->hashtag ? str_replace('#', '', $request->hashtag) : null;
         $buildingId = $this->getBuildingIdFromRoom($request->room_id);
 
-        // Update post
         $post->update([
             'user_id'     => $user->id,
             'title'       => $request->title,
@@ -201,9 +192,7 @@ class PostController extends Controller
             'building_id' => $buildingId,
         ]);
 
-        // Handle media updates
         if ($request->hasFile('media')) {
-            // Optionally delete existing media
             $post->media()->delete();
             foreach ($request->file('media') as $file) {
                 $ext = strtolower($file->getClientOriginalExtension());

@@ -206,7 +206,7 @@
 
 <body>
     <div class="container">
-        <h1>EPUHub</h1>
+        <h1>Ehub</h1>
 
         {{-- Thông báo lỗi --}}
         @if (session('error'))

@@ -90,6 +90,7 @@ Route::middleware('auth.custom')->group(function () {
     Route::get('/get-floors/{building}', [LocationController::class, 'getFloors']);
     Route::get('/get-rooms/{floor}', [LocationController::class, 'getRooms']);
     Route::get('/home', [PostController::class, 'home'])->name('home');
+    Route::get('/top-posts', [PostController::class, 'topPosts'])->name('posts.top');
     Route::get('/posts/create', [PostController::class, 'create'])->name('posts.create');
     Route::post('/posts', [PostController::class, 'store'])->name('posts.store');
 });

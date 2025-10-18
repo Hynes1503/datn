@@ -13,20 +13,16 @@ use Illuminate\Support\Facades\Auth;
 
 class UserController extends Controller
 {
-    // Danh sách user
     public function index()
     {
         $users = User::latest()->paginate(10);
         return view('admin.users.index', compact('users'));
     }
 
-    // Form thêm user
     public function create()
     {
         return view('admin.users.create');
     }
-
-    // Lưu user mới
     public function store(Request $request)
     {
         $request->validate([
@@ -54,14 +50,12 @@ class UserController extends Controller
         ]);
         $data['password'] = Hash::make($request->password);
 
-        // Generate mention thủ công
         $baseMention = Str::slug($data['name']);
         do {
             $mention = $baseMention . rand(100, 999);
         } while (User::where('mention', $mention)->exists());
         $data['mention'] = $mention;
 
-        // Upload avatar nếu có
         if ($request->hasFile('avatar')) {
             $data['avatar'] = $request->file('avatar')->store('avatars', 'public');
         }
@@ -71,10 +65,8 @@ class UserController extends Controller
         return redirect()->route('admin.users.index')->with('success', 'Thêm người dùng thành công!');
     }
 
-    // Xem chi tiết user
     public function show(User $user)
     {
-        // Load the user with paginated posts, including media and room relationships
         $posts = $user->posts()
             ->with('media', 'room')
             ->orderBy('created_at', 'desc')
@@ -85,7 +77,6 @@ class UserController extends Controller
             ->first();
         return view('admin.users.show', compact('user', 'posts', 'report'));
     }
-    // Updated method to update user status in App\Http\Controllers\Admin\UserController
     public function updateStatus(Request $request)
     {
         $request->validate([
@@ -103,22 +94,19 @@ class UserController extends Controller
             ], 403);
         }
 
-        // Find or create a report for the user
         $report = Report::where('reportable_id', $user->id)
             ->where('reportable_type', User::class)
             ->orderBy('created_at', 'desc')
             ->first();
 
         if ($report) {
-            // Update existing report status
             $report->update(['status' => $request->status]);
         } else {
-            // Create a new report if none exists
             Report::create([
                 'reporter_id' => $admin->id,
                 'reportable_id' => $user->id,
                 'reportable_type' => User::class,
-                'reason' => 'Status updated by admin',
+                'reason' => 'Tạo ra bởi admin',
                 'status' => $request->status,
             ]);
         }
@@ -128,13 +116,11 @@ class UserController extends Controller
             'message' => 'Cập nhật trạng thái người dùng thành công.'
         ]);
     }
-    // Form sửa user
     public function edit(User $user)
     {
         return view('admin.users.edit', compact('user'));
     }
 
-    // Cập nhật user
     public function update(Request $request, User $user)
     {
         $request->validate([
@@ -156,7 +142,6 @@ class UserController extends Controller
             'role',
         ]);
 
-        // nếu có đổi mật khẩu
         if ($request->filled('password')) {
             $request->validate([
                 'password' => 'min:6|confirmed',
@@ -164,9 +149,7 @@ class UserController extends Controller
             $data['password'] = Hash::make($request->password);
         }
 
-        // nếu có upload avatar mới
         if ($request->hasFile('avatar')) {
-            // xóa avatar cũ
             if ($user->avatar && Storage::disk('public')->exists($user->avatar)) {
                 Storage::disk('public')->delete($user->avatar);
             }
@@ -178,10 +161,8 @@ class UserController extends Controller
         return redirect()->route('admin.users.index')->with('success', 'Cập nhật người dùng thành công!');
     }
 
-    // Xóa user
     public function destroy(User $user)
     {
-        // Xóa avatar nếu có
         if ($user->avatar && Storage::disk('public')->exists($user->avatar)) {
             Storage::disk('public')->delete($user->avatar);
         }

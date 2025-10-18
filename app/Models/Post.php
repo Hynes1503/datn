@@ -4,7 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-
+use Illuminate\Support\Carbon;
 class Post extends Model
 {
     use HasFactory;
@@ -86,5 +86,17 @@ class Post extends Model
             $q->where('status', 'resolved');
         });
     }
-    
+    public function getScoreAttribute()
+    {
+        $likesCount = $this->likes()->count();
+        $commentsCount = $this->allcomments()->count();
+
+        // Thời gian (tính bằng giờ hoặc ngày)
+        $hoursSincePosted = Carbon::parse($this->created_at)->diffInHours(now());
+
+        // Công thức tính điểm
+        $score = ($likesCount * 2) + ($commentsCount * 3) + (1 / ($hoursSincePosted + 1));
+
+        return round($score, 2);
+    }
 }

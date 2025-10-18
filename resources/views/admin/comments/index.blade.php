@@ -360,9 +360,6 @@
                         </td>
                         <td>{{ $comment->created_at->format('d/m/Y H:i') }}</td>
                         <td class="action-cell">
-                            <a href="{{ route('admin.comments.edit', $comment) }}" title="Sửa bình luận">
-                                <i class="fa-solid fa-pencil action-icon edit-icon"></i>
-                            </a>
                             <form action="{{ route('admin.comments.destroy', $comment) }}" method="POST"
                                   onsubmit="return confirm('Bạn có chắc muốn xóa bình luận này?')">
                                 @csrf

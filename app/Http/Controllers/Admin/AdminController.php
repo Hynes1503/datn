@@ -18,31 +18,23 @@ class AdminController extends Controller
     {
         $type = $request->get('type', 'month');
 
-        // Thống kê cơ bản
         $totalUsers = User::count();
         $totalPosts = Post::count();
         $totalComments = Comment::count();
         $unreadNotifications = auth()->check() ? auth()->user()->unreadNotifications()->count() : 0;
 
-        // User mới nhất
         $latestUsers = User::latest()->take(5)->get();
 
-        /**
-         * 1. Biểu đồ Thống kê bài viết (day / month / year)
-         */
         if ($type === 'day') {
-            // 7 ngày gần nhất
             $labels = collect(range(6, 0))->map(fn($i) => Carbon::now()->subDays($i)->format('d/m'));
             $data = $labels->map(function ($label) {
                 $date = Carbon::createFromFormat('d/m', $label)->setYear(now()->year);
                 return Post::whereDate('created_at', $date)->count();
             });
         } elseif ($type === 'year') {
-            // 5 năm gần nhất
             $labels = collect(range(now()->year - 5, now()->year));
             $data = $labels->map(fn($year) => Post::whereYear('created_at', $year)->count());
-        } else { // month
-            // 12 tháng trong năm hiện tại
+        } else {
             $labels = collect(range(1, 12))->map(fn($m) => "Tháng $m");
             $data = collect(range(1, 12))->map(
                 fn($m) => Post::whereYear('created_at', now()->year)
@@ -51,10 +43,6 @@ class AdminController extends Controller
             );
         }
 
-
-        /**
-         * 2. Top bài viết nhiều view
-         */
         $topPostsQuery = Post::select('title', 'views')
             ->orderByDesc('views')
             ->limit(5)
@@ -65,9 +53,6 @@ class AdminController extends Controller
             'data'   => $topPostsQuery->pluck('views'),
         ];
 
-        /**
-         * 3. User đăng ký theo tháng (năm hiện tại)
-         */
         $usersPerMonthQuery = User::select(
             DB::raw('MONTH(created_at) as month'),
             DB::raw('COUNT(*) as count')
